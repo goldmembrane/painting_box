@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Painting box",
+  "version": "1.0.0",
+  "description": "Pull out when you pick color or font familiy, save it and give to develop environment",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "icon": {}
+}
