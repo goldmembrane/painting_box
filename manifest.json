@@ -9,5 +9,10 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "icon": {}
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["content.js"]
+    }
+  ]
 }
