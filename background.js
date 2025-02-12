@@ -30,6 +30,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 function pickColorMode(imageSrc) {
+  document.body.style.pointerEvents = "none";
   function rgbaToHex(r, g, b, a) {
     let hexCode = (value) => value.toString(16).padStart(2, "0");
     let alpha = a < 1 ? hexCode(Math.round(a * 255)) : "";
@@ -46,7 +47,6 @@ function pickColorMode(imageSrc) {
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0, img.width, img.height);
 
-    // 🔹 사용자가 클릭한 좌표의 색상 추출
     document.addEventListener(
       "click",
       (event) => {
@@ -58,6 +58,8 @@ function pickColorMode(imageSrc) {
 
         alert(`선택한 색상: ${hexColor}`);
         console.log("선택한 색상:", hexColor);
+
+        document.body.style.pointerEvents = "auto";
       },
       { once: true }
     ); // 한 번만 실행되도록 설정
