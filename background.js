@@ -9,13 +9,57 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "pickColor") {
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      function: confirmConsole,
-    });
+    chrome.tabs.captureVisibleTab(
+      tab.windowId,
+      { format: "png" },
+      (imageSrc) => {
+        if (chrome.runtime.lastError) {
+          console.error("캡처 오류:", chrome.runtime.lastError.message);
+          return;
+        }
+
+        // 🔹 웹페이지(content script)에서 `pickColorFromImage` 실행
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: pickColorMode, // 웹페이지에서 실행될 함수
+          args: [imageSrc], // 캡처한 이미지 전달
+        });
+      }
+    );
   }
 });
 
-function confirmConsole() {
-  console.log("right click attached!");
+function pickColorMode(imageSrc) {
+  function rgbaToHex(r, g, b, a) {
+    let hexCode = (value) => value.toString(16).padStart(2, "0");
+    let alpha = a < 1 ? hexCode(Math.round(a * 255)) : "";
+    return `#${hexCode(r)}${hexCode(g)}${hexCode(b)}${alpha}`.toUpperCase();
+  }
+  let img = new Image();
+  img.src = imageSrc;
+
+  img.onload = () => {
+    // 🔹 캔버스를 생성하고, 캡처한 이미지를 그림
+    let canvas = document.createElement("canvas");
+    let ctx = canvas.getContext("2d");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+
+    // 🔹 사용자가 클릭한 좌표의 색상 추출
+    document.addEventListener(
+      "click",
+      (event) => {
+        let x = event.clientX;
+        let y = event.clientY;
+
+        let pixel = ctx.getImageData(x, y, 1, 1).data;
+        let hexColor = rgbaToHex(pixel[0], pixel[1], pixel[2], pixel[3] / 255);
+
+        alert(`선택한 색상: ${hexColor}`);
+        console.log("선택한 색상:", hexColor);
+      },
+      { once: true }
+    ); // 한 번만 실행되도록 설정
+  };
 }
