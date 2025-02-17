@@ -9,7 +9,7 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "permissions": ["activeTab", "contextMenus", "scripting", "tabs"],
+  "permissions": ["activeTab", "contextMenus", "scripting", "tabs", "storage"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
