@@ -70,8 +70,24 @@ function pickColorMode(imageSrc) {
   };
 }
 
-chrome.runtime.onMessage.addListener((message, sender, response) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "openPopupWithColor") {
-    chrome.storage.local.set({ pickedColor: message.color }, () => {});
+    chrome.storage.local.set({ pickedColor: message.color }, () => {
+      console.log("색상이 저장되었습니다:", message.color);
+
+      chrome.windows.getCurrent((currentWindow) => {
+        let windowWidth = currentWindow.width || 1920;
+        let windowHeight = currentWindow.height || 1080;
+
+        chrome.windows.create({
+          url: "popup.html",
+          type: "popup",
+          width: 350,
+          height: windowHeight,
+          top: 0,
+          left: windowWidth - 350,
+        });
+      });
+    });
   }
 });
