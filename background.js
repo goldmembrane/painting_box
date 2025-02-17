@@ -56,8 +56,12 @@ function pickColorMode(imageSrc) {
         let pixel = ctx.getImageData(x, y, 1, 1).data;
         let hexColor = rgbaToHex(pixel[0], pixel[1], pixel[2], pixel[3] / 255);
 
-        alert(`선택한 색상: ${hexColor}`);
         console.log("선택한 색상:", hexColor);
+
+        chrome.runtime.sendMessage({
+          action: "openPopupWithColor",
+          color: hexColor,
+        });
 
         document.body.style.pointerEvents = "auto";
       },
@@ -65,3 +69,9 @@ function pickColorMode(imageSrc) {
     ); // 한 번만 실행되도록 설정
   };
 }
+
+chrome.runtime.onMessage.addListener((message, sender, response) => {
+  if (message.action === "openPopupWithColor") {
+    chrome.storage.local.set({ pickedColor: message.color }, () => {});
+  }
+});
