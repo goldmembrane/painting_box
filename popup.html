@@ -2,89 +2,22 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Painting box</title>
+    <title>색 추출 결과</title>
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Arial, Helvetica, sans-serif;
-      }
-
-      .sidebar {
-        width: 300px;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        padding: 20px;
-      }
-
-      .header {
-        font-size: 20px;
-        font-weight: bold;
-        margin-bottom: 15px;
-      }
-
-      .color-preview {
+      .color-box {
         width: 100%;
-        height: 100px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-        border: 2px solid #ddd;
-      }
-
-      .color-code {
-        font-size: 16px;
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 10px;
-      }
-
-      .btn {
-        width: 100%;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        background: #007bff;
+        height: 40px;
         color: white;
-        font-size: 16px;
-        cursor: pointer;
+        font-weight: bold;
         text-align: center;
-      }
-
-      .btn:hover {
-        background: #0056b3;
-      }
-
-      .close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: transparent;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
       }
     </style>
-
-    <body>
-      <!-- 🟢 사이드바 컨테이너 -->
-      <div class="sidebar">
-        <button id="close-btn">✖</button>
-        <div class="header">색 추출 도구</div>
-
-        <!-- 🟢 색상 미리보기 -->
-        <div class="color-preview" id="colorPreview"></div>
-
-        <!-- 🟢 색상 코드 -->
-        <div class="color-code" id="colorCode">#FFFFFF</div>
-
-        <!-- 🟢 색 추출 모드 버튼 -->
-        <button class="btn" id="startPicker">색 추출 시작</button>
-      </div>
-
-      <script src="popup.js"></script>
-    </body>
   </head>
+  <body>
+    <h2>캡처된 이미지</h2>
+    <div id="capturedImageContainer"></div>
+    <h2>추출된 색상</h2>
+    <div id="colorList"></div>
+    <script src="popup.js"></script>
+  </body>
 </html>
