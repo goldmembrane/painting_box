@@ -26,8 +26,6 @@ window.startColorSelection = function () {
     if (!selectionBox) {
       selectionBox = document.createElement("div");
       selectionBox.style.position = "absolute";
-      selectionBox.style.border = "2px dashed red";
-      selectionBox.style.background = "rgba(255, 0, 0, 0.2)";
       selectionBox.style.pointerEvents = "none"; // ✅ 선택 영역 내에서도 이벤트 차단
       document.body.appendChild(selectionBox);
     }
