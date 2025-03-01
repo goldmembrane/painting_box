@@ -1,48 +1,99 @@
 window.startColorSelection = function () {
-  let isDragging = false;
-  let startX, startY, endX, endY;
-  let selectionBox = document.createElement("div");
+  let isDragging = true;
+  let startX, startY;
+  let selectionBox = null;
 
-  selectionBox.style.position = "fixed";
-  selectionBox.style.border = "2px dashed red";
-  selectionBox.style.background = "rgba(255, 0, 0, 0.2)";
-  selectionBox.style.pointerEvents = "none";
-  selectionBox.style.zIndex = "9999";
-  document.body.appendChild(selectionBox);
+  // ✅ 기존 마우스 이벤트 방지
+  document.body.style.pointerEvents = "none";
+  document.addEventListener("mousedown", onMouseDown, true);
+  document.addEventListener("mousemove", onMouseMove, true);
+  document.addEventListener("mouseup", onMouseUp, true);
+  document.addEventListener("click", preventDefault, true);
+  document.addEventListener("contextmenu", preventDefault, true);
+  document.addEventListener("wheel", preventDefault, { passive: false });
 
-  document.addEventListener("mousedown", (event) => {
-    isDragging = true;
+  // ✅ 커서 스타일 변경
+  document.body.style.cursor = "crosshair";
+
+  function onMouseDown(event) {
+    if (!isDragging) return;
+
+    event.preventDefault();
     startX = event.clientX;
     startY = event.clientY;
+
+    // ✅ 선택 영역 박스 생성
+    if (!selectionBox) {
+      selectionBox = document.createElement("div");
+      selectionBox.style.position = "absolute";
+      selectionBox.style.border = "2px dashed red";
+      selectionBox.style.background = "rgba(255, 0, 0, 0.2)";
+      selectionBox.style.pointerEvents = "none"; // ✅ 선택 영역 내에서도 이벤트 차단
+      document.body.appendChild(selectionBox);
+    }
 
     selectionBox.style.left = `${startX}px`;
     selectionBox.style.top = `${startY}px`;
     selectionBox.style.width = "0px";
     selectionBox.style.height = "0px";
-  });
+  }
 
-  document.addEventListener("mousemove", (event) => {
+  function onMouseMove(event) {
+    if (!isDragging || !selectionBox) return;
+
+    event.preventDefault();
+
+    let width = event.clientX - startX;
+    let height = event.clientY - startY;
+
+    selectionBox.style.width = `${Math.abs(width)}px`;
+    selectionBox.style.height = `${Math.abs(height)}px`;
+    selectionBox.style.left = `${Math.min(startX, event.clientX)}px`;
+    selectionBox.style.top = `${Math.min(startY, event.clientY)}px`;
+  }
+
+  function onMouseUp(event) {
     if (!isDragging) return;
 
-    endX = event.clientX;
-    endY = event.clientY;
+    event.preventDefault();
 
-    selectionBox.style.left = `${Math.min(startX, endX)}px`;
-    selectionBox.style.top = `${Math.min(startY, endY)}px`;
-    selectionBox.style.width = `${Math.abs(endX - startX)}px`;
-    selectionBox.style.height = `${Math.abs(endY - startY)}px`;
-  });
+    let endX = event.clientX;
+    let endY = event.clientY;
 
-  document.addEventListener("mouseup", (event) => {
-    if (!isDragging) return;
-    isDragging = false;
-    document.body.removeChild(selectionBox);
+    console.log(`🎯 선택된 영역: (${startX}, ${startY}) → (${endX}, ${endY})`);
 
+    // ✅ 마우스 이벤트 원상 복구
+    stopSelectionMode();
+
+    // ✅ 선택된 영역을 전달
     chrome.runtime.sendMessage({
       action: "captureScreen",
       area: { x1: startX, y1: startY, x2: endX, y2: endY },
     });
-  });
+
+    // ✅ 선택 박스 제거
+    if (selectionBox) {
+      selectionBox.remove();
+      selectionBox = null;
+    }
+  }
+
+  function stopSelectionMode() {
+    document.body.style.pointerEvents = "auto";
+    document.body.style.cursor = "default";
+
+    document.removeEventListener("mousedown", onMouseDown, true);
+    document.removeEventListener("mousemove", onMouseMove, true);
+    document.removeEventListener("mouseup", onMouseUp, true);
+    document.removeEventListener("click", preventDefault, true);
+    document.removeEventListener("contextmenu", preventDefault, true);
+    document.removeEventListener("wheel", preventDefault, { passive: false });
+  }
+
+  function preventDefault(event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 };
 
 window.extractColorsFromImage = function (imageSrc, x1, y1, x2, y2) {
