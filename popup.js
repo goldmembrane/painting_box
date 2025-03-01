@@ -14,77 +14,109 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (data.extractedColors && data.extractedColors.length > 0) {
-      let sortedColors = clusterColors(data.extractedColors, 5); // ✅ 5개의 색상 그룹으로 클러스터링
+      let { grayscaleColors, colorClusters } = separateGrayscale(
+        data.extractedColors,
+        5
+      );
 
-      sortedColors.forEach((group, index) => {
-        let groupContainer = document.createElement("div");
-        groupContainer.classList.add("color-group");
+      // ✅ 흑백 계열 색상 표시
+      if (grayscaleColors.length > 0) {
+        createColorGroup("흑백 계열", grayscaleColors, colorContainer);
+      }
 
-        // ✅ 그룹 대표 색상 계산 (평균 색상)
-        let representativeColor = calculateAverageColor(group);
-
-        // ✅ 그룹 제목 및 펼치기 버튼 추가
-        let header = document.createElement("div");
-        header.classList.add("group-header");
-
-        let colorPreview = document.createElement("div");
-        colorPreview.classList.add("color-preview");
-        colorPreview.style.backgroundColor = representativeColor;
-
-        let title = document.createElement("span");
-        title.innerText = `그룹 ${index + 1}`;
-
-        let toggleButton = document.createElement("button");
-        toggleButton.innerText = "펼치기";
-        toggleButton.classList.add("toggle-button");
-        toggleButton.onclick = () => {
-          if (colorListContainer.style.display === "none") {
-            colorListContainer.style.display = "flex";
-            toggleButton.innerText = "접기";
-          } else {
-            colorListContainer.style.display = "none";
-            toggleButton.innerText = "펼치기";
-          }
-        };
-
-        header.appendChild(colorPreview);
-        header.appendChild(title);
-        header.appendChild(toggleButton);
-        groupContainer.appendChild(header);
-
-        // ✅ 색상 리스트 컨테이너 (기본적으로 숨김)
-        let colorListContainer = document.createElement("div");
-        colorListContainer.classList.add("color-list-container");
-        colorListContainer.style.display = "none";
-
-        group.forEach((color) => {
-          let colorBoxContainer = document.createElement("div");
-          colorBoxContainer.classList.add("color-box-container");
-
-          let colorBox = document.createElement("div");
-          colorBox.classList.add("color-box");
-          colorBox.style.backgroundColor = color;
-
-          let rgb = hexToRgb(color);
-          let rgbText = `RGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-
-          let textBox = document.createElement("div");
-          textBox.classList.add("color-text");
-          textBox.innerText = `${color}\n${rgbText}`;
-
-          colorBoxContainer.appendChild(colorBox);
-          colorBoxContainer.appendChild(textBox);
-          colorListContainer.appendChild(colorBoxContainer);
-        });
-
-        groupContainer.appendChild(colorListContainer);
-        colorContainer.appendChild(groupContainer);
+      // ✅ 컬러 그룹 표시
+      colorClusters.forEach((group, index) => {
+        createColorGroup(`컬러 그룹 ${index + 1}`, group, colorContainer);
       });
     } else {
       colorContainer.innerText = "추출된 색상 없음";
     }
   });
 });
+
+// ✅ 흑백 계열 색상과 컬러 색상을 분리하는 함수
+function separateGrayscale(colors, numClusters) {
+  let grayscaleColors = [];
+  let colorColors = [];
+
+  colors.forEach((hex) => {
+    let rgb = hexToRgb(hex);
+    let hsl = rgbToHsl(rgb);
+
+    // ✅ 흑백 계열 (채도(S)가 10% 이하)
+    if (hsl[1] <= 0.1) {
+      grayscaleColors.push(hex);
+    } else {
+      colorColors.push(hex);
+    }
+  });
+
+  // ✅ 흑백 계열을 따로 저장하고, 컬러만 K-Means 클러스터링 수행
+  let colorClusters = clusterColors(colorColors, numClusters);
+
+  return { grayscaleColors, colorClusters };
+}
+
+// ✅ 색상 그룹을 생성하는 함수 (UI 업데이트)
+function createColorGroup(title, colors, container) {
+  let groupContainer = document.createElement("div");
+  groupContainer.classList.add("color-group");
+
+  let header = document.createElement("div");
+  header.classList.add("group-header");
+
+  let colorPreview = document.createElement("div");
+  colorPreview.classList.add("color-preview");
+  colorPreview.style.backgroundColor = colors[0];
+
+  let titleElement = document.createElement("span");
+  titleElement.innerText = title;
+
+  let toggleButton = document.createElement("button");
+  toggleButton.innerText = "펼치기";
+  toggleButton.classList.add("toggle-button");
+  toggleButton.onclick = () => {
+    if (colorListContainer.style.display === "none") {
+      colorListContainer.style.display = "flex";
+      toggleButton.innerText = "접기";
+    } else {
+      colorListContainer.style.display = "none";
+      toggleButton.innerText = "펼치기";
+    }
+  };
+
+  header.appendChild(colorPreview);
+  header.appendChild(titleElement);
+  header.appendChild(toggleButton);
+  groupContainer.appendChild(header);
+
+  let colorListContainer = document.createElement("div");
+  colorListContainer.classList.add("color-list-container");
+  colorListContainer.style.display = "none";
+
+  colors.forEach((color) => {
+    let colorBoxContainer = document.createElement("div");
+    colorBoxContainer.classList.add("color-box-container");
+
+    let colorBox = document.createElement("div");
+    colorBox.classList.add("color-box");
+    colorBox.style.backgroundColor = color;
+
+    let rgb = hexToRgb(color);
+    let rgbText = `RGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+
+    let textBox = document.createElement("div");
+    textBox.classList.add("color-text");
+    textBox.innerText = `${color}\n${rgbText}`;
+
+    colorBoxContainer.appendChild(colorBox);
+    colorBoxContainer.appendChild(textBox);
+    colorListContainer.appendChild(colorBoxContainer);
+  });
+
+  groupContainer.appendChild(colorListContainer);
+  container.appendChild(groupContainer);
+}
 
 // ✅ 그룹의 대표 색상(평균값) 계산
 function calculateAverageColor(colorGroup) {
@@ -97,13 +129,10 @@ function calculateAverageColor(colorGroup) {
   return rgbToHex(avgColor);
 }
 
+// ✅ 색상을 비슷한 그룹으로 클러스터링 (K-Means 방식)
 function clusterColors(colors, numClusters) {
   let rgbColors = colors.map(hexToRgb);
-
-  // ✅ K-Means 클러스터링 적용
   let clusters = kMeans(rgbColors, numClusters);
-
-  // ✅ 클러스터별 정렬
   return clusters.map((cluster) => cluster.map(rgbToHex));
 }
 
@@ -117,6 +146,40 @@ function hexToRgb(hex) {
 // ✅ RGB → HEX 변환
 function rgbToHex(rgb) {
   return `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+// ✅ RGB → HSL 변환
+function rgbToHsl([r, g, b]) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  let max = Math.max(r, g, b);
+  let min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0; // 무채색
+  } else {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return [h, s, l];
 }
 
 // ✅ K-Means 클러스터링 알고리즘

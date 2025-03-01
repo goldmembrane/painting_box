@@ -10,12 +10,12 @@
       }
       #colorList {
         display: flex;
-        flex-direction: column; /* ✅ 그룹별 세로 정렬 */
+        flex-direction: column;
         gap: 15px;
       }
       .color-group {
         display: flex;
-        flex-direction: column; /* ✅ 그룹 내에서도 세로 정렬 */
+        flex-direction: column;
         gap: 5px;
         align-items: center;
         padding: 10px;
@@ -64,17 +64,12 @@
         border-radius: 8px;
         border: 1px solid #ddd;
       }
-      .color-text {
-        font-size: 12px;
-        text-align: center;
-        color: black;
-      }
     </style>
   </head>
   <body>
     <h2>캡처된 이미지</h2>
     <div id="capturedImageContainer"></div>
-    <h2>비슷한 색상 그룹</h2>
+    <h2>추출된 색상</h2>
     <div id="colorList"></div>
     <script src="popup.js"></script>
   </body>
