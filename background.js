@@ -1,3 +1,20 @@
+chrome.action.onClicked.addListener(() => {
+  chrome.action.setPopup({ popup: "popup_default.html" });
+});
+
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+//   if (message.action === "openColorPopup") {
+//     chrome.storage.local.set({ popupMode: "colorPicker" }, () => {
+//       chrome.windows.create({
+//         url: "popup.html",
+//         type: "popup",
+//         width: 350,
+//         height: 600,
+//       });
+//     });
+//   }
+// });
+
 // 확장 프로그램의 백그라운드 동작 구현
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -83,7 +100,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "saveExtractedColors") {
     chrome.storage.local.set(
-      { extractedColors: message.colors, capturedImage: message.image },
+      {
+        extractedColors: message.colors,
+        capturedImage: message.image,
+        popupMode: "colorPicker",
+      },
       () => {
         console.log("✅ 색상 데이터 저장 완료");
 
@@ -105,5 +126,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     );
 
     return true; // ✅ 비동기 응답을 사용하기 위해 `return true;` 필요
+  } else if (message.action === "updatePresets") {
+    chrome.storage.local.get(["colorPresets"], (data) => {
+      sendResponse({ presets: data.colorPresets });
+    });
+    return true; // 비동기 응답을 위해 true 반환
   }
 });
