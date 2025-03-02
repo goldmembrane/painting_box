@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(["capturedImage", "extractedColors"], (data) => {
     let imageContainer = document.getElementById("capturedImageContainer");
     let colorContainer = document.getElementById("colorList");
+    let presetContainer = document.getElementById("presetList");
 
     if (data.capturedImage) {
       let img = new Image();
@@ -31,8 +32,79 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       colorContainer.innerText = "추출된 색상 없음";
     }
+
+    if (data.colorPresets && data.colorPresets.length > 0) {
+      updatePresetList(data.colorPresets);
+    }
   });
 });
+
+// ✅ 개별 색상 프리셋 추가 (색상과 HEX 코드 함께 저장)
+function addColorToPreset(color) {
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let presets = data.colorPresets || [];
+
+    // ✅ 프리셋에 동일한 색상이 존재하는지 확인 후 추가
+    if (!presets.some((preset) => preset.color === color)) {
+      let newPreset = {
+        id: Date.now(),
+        color: color,
+        hexCode: color, // ✅ HEX 코드와 동일한 값 저장
+      };
+
+      presets.push(newPreset);
+      chrome.storage.local.set({ colorPresets: presets }, () => {
+        updatePresetList(presets);
+      });
+    }
+  });
+}
+
+// ✅ 저장된 색상 프리셋 불러오기 및 UI 업데이트
+function updatePresetList(presets) {
+  let presetContainer = document.getElementById("presetList");
+  presetContainer.innerHTML = "";
+
+  presets.forEach((preset) => {
+    let presetDiv = document.createElement("div");
+    presetDiv.classList.add("preset-item");
+
+    let colorBox = document.createElement("div");
+    colorBox.classList.add("color-box");
+    colorBox.style.backgroundColor = preset.color;
+
+    let hexText = document.createElement("span");
+    hexText.classList.add("hex-text");
+    hexText.innerText = preset.hexCode;
+
+    let deleteBtn = document.createElement("button");
+    deleteBtn.innerText = "삭제";
+    deleteBtn.onclick = () => deletePreset(preset.id);
+
+    presetDiv.appendChild(colorBox);
+    presetDiv.appendChild(hexText);
+    presetDiv.appendChild(deleteBtn);
+    presetContainer.appendChild(presetDiv);
+  });
+}
+
+// // ✅ 프리셋 적용 (저장된 색상을 UI에 표시)
+// function loadPreset(colors) {
+//   let colorContainer = document.getElementById("colorList");
+//   colorContainer.innerHTML = "";
+//   createColorGroup("적용된 프리셋", colors, colorContainer);
+// }
+
+// ✅ 프리셋에서 개별 색상 삭제
+function deletePreset(color) {
+  chrome.storage.local.get("colorPresets", (data) => {
+    let presets = data.colorPresets || [];
+    let updatedPresets = presets.filter((c) => c !== color);
+    chrome.storage.local.set({ colorPresets: updatedPresets }, () => {
+      updatePresetList(updatedPresets);
+    });
+  });
+}
 
 // ✅ 더욱 정밀한 흑백 계열 분리 및 코사인 유사도로 그룹화
 function separateGrayscaleAndGroupByCosine(colors, similarityThreshold = 0.98) {
@@ -189,8 +261,13 @@ function createColorGroup(title, colors, container) {
     textBox.classList.add("color-text");
     textBox.innerText = `${color}\n${rgbText}`;
 
+    let saveBtn = document.createElement("button");
+    saveBtn.innerText = "프리셋 추가";
+    saveBtn.onclick = () => addColorToPreset(color);
+
     colorBoxContainer.appendChild(colorBox);
     colorBoxContainer.appendChild(textBox);
+    colorBoxContainer.appendChild(saveBtn);
     colorListContainer.appendChild(colorBoxContainer);
   });
 

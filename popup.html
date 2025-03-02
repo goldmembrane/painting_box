@@ -64,6 +64,31 @@
         border-radius: 8px;
         border: 1px solid #ddd;
       }
+      .preset-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .preset-preview {
+        display: flex;
+        gap: 3px;
+      }
+      .hex-text {
+        font-size: 14px;
+        font-weight: bold;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
     </style>
   </head>
   <body>
@@ -71,6 +96,10 @@
     <div id="capturedImageContainer"></div>
     <h2>추출된 색상</h2>
     <div id="colorList"></div>
+
+    <h2>저장된 프리셋</h2>
+    <div id="presetList"></div>
+
     <script src="popup.js"></script>
   </body>
 </html>
