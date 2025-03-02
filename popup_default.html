@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>색상 프리셋</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+        width: 300px;
+      }
+      .preset-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .color-information {
+        display: flex;
+        align-items: center;
+      }
+      .color-box {
+        width: 40px;
+        height: 40px;
+        display: inline-block;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        margin-right: 5px;
+      }
+      .hex-text {
+        font-size: 14px;
+        font-weight: bold;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>저장된 프리셋</h2>
+    <div id="presetList"></div>
+    <script src="popup_default.js"></script>
+  </body>
+</html>

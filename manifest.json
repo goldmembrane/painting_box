@@ -7,7 +7,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup_default.html"
   },
   "permissions": ["activeTab", "contextMenus", "scripting", "tabs", "storage"],
   "host_permissions": ["<all_urls>"],

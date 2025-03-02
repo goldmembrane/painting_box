@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(["capturedImage", "extractedColors"], (data) => {
     let imageContainer = document.getElementById("capturedImageContainer");
     let colorContainer = document.getElementById("colorList");
-    let presetContainer = document.getElementById("presetList");
 
     if (data.capturedImage) {
       let img = new Image();
@@ -54,7 +53,13 @@ function addColorToPreset(color) {
 
       presets.push(newPreset);
       chrome.storage.local.set({ colorPresets: presets }, () => {
+        console.log("✅ 프리셋 저장 완료:", presets);
         updatePresetList(presets);
+
+        // ✅ popup_default.html에 업데이트 메시지 전송
+        chrome.runtime.sendMessage({ action: "updatePresets" }, (response) => {
+          console.log("📢 프리셋 업데이트 메시지 전송 완료:", response);
+        });
       });
     }
   });
@@ -87,13 +92,6 @@ function updatePresetList(presets) {
     presetContainer.appendChild(presetDiv);
   });
 }
-
-// // ✅ 프리셋 적용 (저장된 색상을 UI에 표시)
-// function loadPreset(colors) {
-//   let colorContainer = document.getElementById("colorList");
-//   colorContainer.innerHTML = "";
-//   createColorGroup("적용된 프리셋", colors, colorContainer);
-// }
 
 // ✅ 프리셋에서 개별 색상 삭제
 function deletePreset(color) {
