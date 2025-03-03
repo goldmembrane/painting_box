@@ -1,48 +1,65 @@
 let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
 
 document.addEventListener("DOMContentLoaded", () => {
-  chrome.storage.local.get(["capturedImage", "extractedColors"], (data) => {
-    let imageContainer = document.getElementById("capturedImageContainer");
-    let colorContainer = document.getElementById("colorList");
+  chrome.storage.local.get(
+    ["capturedImage", "extractedColors", "colorPresets"],
+    (data) => {
+      let imageContainer = document.getElementById("capturedImageContainer");
+      let colorContainer = document.getElementById("colorList");
+      let presetDropdown = document.getElementById("presetDropdown");
 
-    if (data.capturedImage) {
-      let img = new Image();
-      img.src = data.capturedImage;
-      img.style.width = "100%";
-      img.style.border = "1px solid #ddd";
-      imageContainer.appendChild(img);
-    } else {
-      imageContainer.innerText = "캡처된 이미지 없음";
-    }
-
-    if (data.extractedColors && data.extractedColors.length > 0) {
-      let { grayscaleColors, colorClusters } =
-        separateGrayscaleAndGroupByCosine(data.extractedColors, 0.99); // ✅ 더 엄격한 유사도 적용
-
-      // ✅ 흑백 계열 색상 표시 (정렬 적용)
-      if (grayscaleColors.length > 0) {
-        grayscaleColors.sort(); // ✅ 오름차순 정렬
-        createColorGroup("흑백 계열", grayscaleColors, colorContainer);
+      if (data.capturedImage) {
+        let img = new Image();
+        img.src = data.capturedImage;
+        img.style.width = "100%";
+        img.style.border = "1px solid #ddd";
+        imageContainer.appendChild(img);
+      } else {
+        imageContainer.innerText = "캡처된 이미지 없음";
       }
 
-      // ✅ 컬러 그룹 표시
-      colorClusters.forEach((group, index) => {
-        group.sort(); // ✅ 그룹 내 색상 오름차순 정렬
-        createColorGroup(`색상 그룹 ${index + 1}`, group, colorContainer);
-      });
-    } else {
-      colorContainer.innerText = "추출된 색상 없음";
-    }
+      if (data.extractedColors && data.extractedColors.length > 0) {
+        let { grayscaleColors, colorClusters } =
+          separateGrayscaleAndGroupByCosine(data.extractedColors, 0.99); // ✅ 더 엄격한 유사도 적용
 
-    if (data.colorPresets && data.colorPresets.length > 0) {
-      updatePresetList(data.colorPresets);
+        // ✅ 흑백 계열 색상 표시 (정렬 적용)
+        if (grayscaleColors.length > 0) {
+          grayscaleColors.sort(); // ✅ 오름차순 정렬
+          createColorGroup("흑백 계열", grayscaleColors, colorContainer);
+        }
+
+        // ✅ 컬러 그룹 표시
+        colorClusters.forEach((group, index) => {
+          group.sort(); // ✅ 그룹 내 색상 오름차순 정렬
+          createColorGroup(`색상 그룹 ${index + 1}`, group, colorContainer);
+        });
+      } else {
+        colorContainer.innerText = "추출된 색상 없음";
+      }
+
+      // ✅ 프리셋 목록 불러오기
+      if (data.colorPresets && data.colorPresets.length > 0) {
+        data.colorPresets.forEach((preset) => {
+          let option = document.createElement("option");
+          option.value = preset.id;
+          option.innerText = preset.name;
+          presetDropdown.appendChild(option);
+        });
+      }
     }
-  });
+  );
 
   // ✅ 선택한 색상을 한꺼번에 저장
   document
     .getElementById("saveSelectedColors")
     .addEventListener("click", () => {
+      let selectedPresetId = document.getElementById("presetDropdown").value;
+
+      if (!selectedPresetId) {
+        alert("프리셋을 선택하세요!");
+        return;
+      }
+
       if (selectedColors.size === 0) {
         alert("저장할 색상을 선택하세요!");
         return;
@@ -51,28 +68,33 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.storage.local.get(["colorPresets"], (data) => {
         let presets = data.colorPresets || [];
 
-        // ✅ 선택한 색상이 기존 프리셋에 없는 경우에만 추가
+        let targetPreset = presets.find(
+          (preset) => preset.id == selectedPresetId
+        );
+        if (!targetPreset) {
+          alert("선택한 프리셋을 찾을 수 없습니다.");
+          return;
+        }
+
+        // ✅ 선택된 색상이 기존 프리셋에 없는 경우에만 추가
         selectedColors.forEach((color) => {
-          if (!presets.some((preset) => preset.color === color)) {
-            let newPreset = {
-              id: Date.now(),
-              color: color,
-              hexCode: color, // ✅ HEX 코드 저장
-            };
-            presets.push(newPreset);
+          if (!targetPreset.colors.includes(color)) {
+            targetPreset.colors.push(color);
           }
         });
 
         chrome.storage.local.set({ colorPresets: presets }, () => {
-          console.log("✅ 선택된 색상이 프리셋에 저장됨:", presets);
-          selectedColors.clear(); // ✅ 저장 후 선택 목록 초기화
-          resetButtons(); // ✅ UI 업데이트
+          console.log(
+            `✅ 프리셋 "${targetPreset.name}"에 선택된 색상이 추가됨:`,
+            targetPreset
+          );
+          selectedColors.clear();
           updateSelectedColorsPreview();
 
           // ✅ popup_default.html 업데이트
           chrome.runtime.sendMessage({ action: "updatePresets" });
 
-          alert("선택한 색상이 저장되었습니다!");
+          alert(`"${targetPreset.name}" 프리셋에 색상이 저장되었습니다!`);
         });
       });
     });

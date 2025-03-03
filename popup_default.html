@@ -11,26 +11,27 @@
       }
       .preset-item {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
+        flex-direction: column;
+        gap: 5px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
         margin-bottom: 10px;
       }
-      .color-information {
+      .color-preview {
         display: flex;
-        align-items: center;
+        gap: 5px;
+        flex-wrap: wrap;
       }
       .color-box {
-        width: 40px;
-        height: 40px;
-        display: inline-block;
+        width: 30px;
+        height: 30px;
         border-radius: 5px;
         border: 1px solid #ddd;
-        margin-right: 5px;
       }
-      .hex-text {
-        font-size: 14px;
-        font-weight: bold;
+      input {
+        padding: 5px;
+        margin-right: 5px;
       }
       button {
         background-color: #007bff;
@@ -46,8 +47,13 @@
     </style>
   </head>
   <body>
+    <h2>프리셋 생성</h2>
+    <input type="text" id="presetName" placeholder="프리셋 이름 입력" />
+    <button id="savePreset">프리셋 생성</button>
+
     <h2>저장된 프리셋</h2>
     <div id="presetList"></div>
+
     <script src="popup_default.js"></script>
   </body>
 </html>
