@@ -104,6 +104,12 @@
         font-weight: bold;
         margin-left: 10px;
       }
+      select,
+      input {
+        padding: 5px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
       button {
         background-color: #007bff;
         color: white;
@@ -133,6 +139,11 @@
     <select id="presetDropdown">
       <option value="">프리셋 선택</option>
     </select>
+
+    <div id="newPresetContainer" style="display: none">
+      <h3>새로운 프리셋 이름</h3>
+      <input type="text" id="newPresetName" placeholder="새 프리셋 이름 입력" />
+    </div>
 
     <button id="saveSelectedColors">프리셋에 저장</button>
 
