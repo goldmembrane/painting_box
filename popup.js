@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", () => {
       let imageContainer = document.getElementById("capturedImageContainer");
       let colorContainer = document.getElementById("colorList");
       let presetDropdown = document.getElementById("presetDropdown");
-      let newPresetContainer = document.getElementById("newPresetContainer");
 
       if (data.capturedImage) {
         let img = new Image();
@@ -46,9 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
           option.innerText = preset.name;
           presetDropdown.appendChild(option);
         });
-      } else {
-        // ✅ 프리셋이 없으면 새 프리셋 입력창 표시
-        newPresetContainer.style.display = "block";
       }
     }
   );
@@ -58,12 +54,24 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("saveSelectedColors")
     .addEventListener("click", () => {
       let selectedPresetId = document.getElementById("presetDropdown").value;
+      let presetNameInput = document.getElementById("newPresetName");
       let newPresetName = document.getElementById("newPresetName").value.trim();
+
+      if (!newPresetName) {
+        alert("프리셋 이름을 입력하세요!");
+        return;
+      }
 
       if (selectedColors.size === 0) {
         alert("저장할 색상을 선택하세요!");
         return;
       }
+
+      let newPreset = {
+        id: Date.now(),
+        name: newPresetName,
+        colors: Array.from(selectedColors),
+      };
 
       chrome.storage.local.get(["colorPresets"], (data) => {
         let presets = data.colorPresets || [];
@@ -90,12 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
 
-          let newPreset = {
-            id: Date.now(),
-            name: newPresetName,
-            colors: Array.from(selectedColors),
-          };
-
           presets.push(newPreset);
         } else {
           alert("프리셋을 선택하거나 새 프리셋 이름을 입력하세요.");
@@ -107,9 +109,18 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("✅ 프리셋 저장 완료:", presets);
           selectedColors.clear();
           updateSelectedColorsPreview();
+          resetButtons();
+
+          presetNameInput.value = "";
 
           // ✅ popup_default.html 업데이트
           chrome.runtime.sendMessage({ action: "updatePresets" });
+
+          // ✅ 새 프리셋을 select 태그에 즉시 추가
+          let newOption = document.createElement("option");
+          newOption.value = newPreset.id;
+          newOption.innerText = newPreset.name;
+          presetDropdown.appendChild(newOption);
 
           alert("색상이 프리셋에 저장되었습니다!");
         });
