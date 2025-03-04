@@ -23,11 +23,6 @@ document.getElementById("savePreset").addEventListener("click", () => {
     let presets = data.colorPresets || [];
     let selectedColors = Array.from(data.selectedColors || []);
 
-    // if (selectedColors.length === 0) {
-    //   alert("저장할 색상이 없습니다.");
-    //   return;
-    // }
-
     // ✅ 동일한 프리셋 이름이 있는지 확인
     if (presets.some((preset) => preset.name === presetName)) {
       alert("이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요.");

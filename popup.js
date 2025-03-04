@@ -357,3 +357,7 @@ function createColorGroup(title, colors, container) {
   groupContainer.appendChild(colorListContainer);
   container.appendChild(groupContainer);
 }
+
+// 비즈니스 로직
+// local -> 구글 계정 연동
+// 프리셋 갯수 제한: 1개 -> 20개(추후 수정 가능)
