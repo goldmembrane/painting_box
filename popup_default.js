@@ -136,3 +136,62 @@ function encryptAndCopyToClipboard(colors) {
       console.error("❌ 클립보드 복사 실패:", err);
     });
 }
+
+// ✅ AES-256 암호화된 데이터를 복호화하는 함수
+function decryptColorsWithAES(encryptedString) {
+  try {
+    let bytes = CryptoJS.AES.decrypt(encryptedString, encryptionKey);
+    let decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    return JSON.parse(decrypted);
+  } catch (error) {
+    console.error("❌ 복호화 오류:", error);
+    return null;
+  }
+}
+
+// ✅ 복호화 후 프리셋으로 저장하는 함수
+document.getElementById("decodeAndSave").addEventListener("click", () => {
+  let encryptedCode = document
+    .getElementById("encryptedCodeInput")
+    .value.trim();
+
+  if (!encryptedCode) {
+    alert("🔐 복호화할 코드를 입력하세요!");
+    return;
+  }
+
+  let decryptedColors = decryptColorsWithAES(encryptedCode);
+
+  if (
+    !decryptedColors ||
+    !Array.isArray(decryptedColors) ||
+    decryptedColors.length === 0
+  ) {
+    alert("❌ 올바른 암호화 코드가 아닙니다!");
+    return;
+  }
+
+  // ✅ 새로운 프리셋 이름 설정 (자동 생성)
+  let newPresetName = `복호화 프리셋 ${Date.now()}`;
+
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let presets = data.colorPresets || [];
+
+    let newPreset = {
+      id: Date.now(),
+      name: newPresetName,
+      colors: decryptedColors,
+    };
+
+    presets.push(newPreset);
+    chrome.storage.local.set({ colorPresets: presets }, () => {
+      console.log(
+        `✅ 복호화된 프리셋 "${newPresetName}" 저장 완료:`,
+        newPreset
+      );
+      loadPresets();
+      document.getElementById("encryptedCodeInput").value = ""; // 입력 필드 초기화
+      alert(`"${newPresetName}" 프리셋이 저장되었습니다!`);
+    });
+  });
+});
