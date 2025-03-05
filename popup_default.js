@@ -1,3 +1,14 @@
+// ✅ crypto-js를 동적으로 불러오기 (Manifest V3 호환)
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL("libs/crypto-js.min.js"); // 로컬에서 로드
+script.onload = () => {
+  console.log("✅ crypto-js 로드 완료!");
+};
+document.head.appendChild(script);
+
+// ✅ AES-256 암호화를 위한 키 (보안을 위해 저장하지 않고, 서버에서 받아오는 것이 일반적)
+const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
+
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
 });
@@ -73,9 +84,15 @@ function loadPresets() {
         deleteBtn.innerText = "삭제";
         deleteBtn.onclick = () => deletePreset(preset.id);
 
+        // ✅ "코드로 보내기" 버튼 추가
+        let encryptBtn = document.createElement("button");
+        encryptBtn.innerText = "코드로 보내기";
+        encryptBtn.onclick = () => encryptAndCopyToClipboard(preset.colors);
+
         presetDiv.appendChild(presetTitle);
         presetDiv.appendChild(colorPreview);
         presetDiv.appendChild(deleteBtn);
+        presetDiv.appendChild(encryptBtn);
         presetContainer.appendChild(presetDiv);
       });
     } else {
@@ -93,4 +110,29 @@ function deletePreset(presetId) {
       loadPresets();
     });
   });
+}
+
+// ✅ HEX 색상 리스트를 AES-256으로 암호화하는 함수
+function encryptColorsWithAES(colors) {
+  let jsonString = JSON.stringify(colors);
+  let encrypted = CryptoJS.AES.encrypt(jsonString, encryptionKey).toString();
+  return encrypted;
+}
+
+// ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
+function encryptAndCopyToClipboard(colors) {
+  let encryptedCode = encryptColorsWithAES(colors);
+
+  let inputField = document.getElementById("encryptedCode");
+  inputField.value = encryptedCode; // ✅ input 필드에 암호화된 코드 표시
+
+  // ✅ 클립보드에 복사
+  navigator.clipboard
+    .writeText(encryptedCode)
+    .then(() => {
+      alert("🔒 암호화된 코드가 복사되었습니다!");
+    })
+    .catch((err) => {
+      console.error("❌ 클립보드 복사 실패:", err);
+    });
 }
