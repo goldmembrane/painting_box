@@ -57,11 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
       let presetNameInput = document.getElementById("newPresetName");
       let newPresetName = document.getElementById("newPresetName").value.trim();
 
-      if (!newPresetName) {
-        alert("프리셋 이름을 입력하세요!");
-        return;
-      }
-
       if (selectedColors.size === 0) {
         alert("저장할 색상을 선택하세요!");
         return;
