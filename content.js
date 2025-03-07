@@ -152,3 +152,28 @@ window.extractColorsFromImage = function (imageSrc, x1, y1, x2, y2) {
     );
   };
 };
+
+async function checkSubscription() {
+  let userId = "user@example.com";
+
+  fetch(`http://localhost:3000/subscription-status/${userId}`)
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.isSubscribed) {
+        chrome.storage.sync.set({
+          isSubscribed: true,
+          subscriptionId: data.subscriptionId,
+        });
+
+        console.log("구독중입니다.");
+      } else {
+        chrome.storage.sync.set({ isSubscribed: false });
+      }
+    })
+    .catch((error) => {
+      console.error("❌ 구독 확인 오류:", error);
+    });
+}
+
+// ✅ 확장 프로그램 실행 시 구독 상태 확인
+checkSubscription();
