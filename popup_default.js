@@ -8,11 +8,19 @@ document.head.appendChild(script);
 
 let isSubscribed = false;
 
+// ✅ 구독 상태 확인 함수
+function checkSubscriptionStatus() {
+  chrome.storage.sync.get(["isSubscribed"], (data) => {
+    isSubscribed = data.isSubscribed || false;
+  });
+}
+
 // ✅ AES-256 암호화를 위한 키 (보안을 위해 저장하지 않고, 서버에서 받아오는 것이 일반적)
 const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
 
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
+  checkSubscriptionStatus();
 });
 
 // ✅ `chrome.storage.onChanged` 리스너 추가 (자동 업데이트)

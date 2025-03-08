@@ -2,7 +2,15 @@ let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
 
 let isSubscribed = false;
 
+// ✅ 구독 상태 확인 함수
+function checkSubscriptionStatus() {
+  chrome.storage.sync.get(["isSubscribed"], (data) => {
+    isSubscribed = data.isSubscribed || false;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  checkSubscriptionStatus();
   chrome.storage.local.get(
     ["capturedImage", "extractedColors", "colorPresets"],
     (data) => {
