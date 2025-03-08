@@ -1,19 +1,72 @@
+// ✅ Google OAuth2 인증을 사용하여 이메일 가져오기
+function getGoogleAccountEmail(callback) {
+  chrome.identity.getAuthToken({ interactive: true }, (token) => {
+    if (chrome.runtime.lastError || !token) {
+      console.error("❌ 인증 토큰 가져오기 실패:", chrome.runtime.lastError);
+      callback(null);
+      return;
+    }
+
+    fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.email) {
+          console.log("✅ Google 계정 이메일 가져오기 성공:", data.email);
+          callback(data.email);
+        } else {
+          console.error("❌ 이메일 정보를 가져오지 못했습니다.");
+          callback(null);
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Google API 요청 실패:", error);
+        callback(null);
+      });
+  });
+}
+// ✅ 백엔드 서버에 구독 상태 확인 요청
+function checkSubscriptionStatus(email, callback) {
+  fetch(`http://localhost:3000/subscription-status/${email}`)
+    .then((res) => res.json())
+    .then((data) => {
+      let isSubscribed = data.isSubscribed || false;
+      chrome.storage.sync.set(
+        {
+          isSubscribed: isSubscribed,
+          subscriptionId: data.subscriptionId,
+          userEmail: email,
+        },
+        () => {
+          callback(isSubscribed);
+        }
+      );
+    })
+    .catch((error) => {
+      console.error("❌ 구독 상태 확인 오류:", error);
+      callback(false);
+    });
+}
+
+// ✅ 확장 프로그램이 실행될 때 구독 상태 확인
+chrome.runtime.onInstalled.addListener(() => {
+  getGoogleAccountEmail((email) => {
+    if (email) {
+      checkSubscriptionStatus(email, (isSubscribed) => {
+        console.log(
+          `📢 ${email} 사용자의 구독 상태: ${
+            isSubscribed ? "✅ 활성" : "❌ 비활성"
+          }`
+        );
+      });
+    }
+  });
+});
+
 chrome.action.onClicked.addListener(() => {
   chrome.action.setPopup({ popup: "popup_default.html" });
 });
-
-// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-//   if (message.action === "openColorPopup") {
-//     chrome.storage.local.set({ popupMode: "colorPicker" }, () => {
-//       chrome.windows.create({
-//         url: "popup.html",
-//         type: "popup",
-//         width: 350,
-//         height: 600,
-//       });
-//     });
-//   }
-// });
 
 // 확장 프로그램의 백그라운드 동작 구현
 chrome.runtime.onInstalled.addListener(() => {

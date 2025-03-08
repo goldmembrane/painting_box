@@ -9,7 +9,18 @@
   "action": {
     "default_popup": "popup_default.html"
   },
-  "permissions": ["activeTab", "contextMenus", "scripting", "tabs", "storage"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "tabs",
+    "storage",
+    "identity"
+  ],
+  "oauth2": {
+    "client_id": "853620929624-c5f56qp6689bt5uu8jprkqr8m1lo08pu.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+  },
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
