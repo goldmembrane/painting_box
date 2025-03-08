@@ -6,6 +6,8 @@ script.onload = () => {
 };
 document.head.appendChild(script);
 
+let isSubscribed = false;
+
 // ✅ AES-256 암호화를 위한 키 (보안을 위해 저장하지 않고, 서버에서 받아오는 것이 일반적)
 const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
 
@@ -37,6 +39,14 @@ document.getElementById("savePreset").addEventListener("click", () => {
     // ✅ 동일한 프리셋 이름이 있는지 확인
     if (presets.some((preset) => preset.name === presetName)) {
       alert("이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요.");
+      return;
+    }
+
+    // ✅ 구독이 없고 프리셋 개수가 2개 이상이면 제한
+    if (!isSubscribed && presets.length >= 1) {
+      alert(
+        "❌ 구독이 필요합니다! 구독을 하면 2개 이상의 프리셋을 생성할 수 있습니다!"
+      );
       return;
     }
 
