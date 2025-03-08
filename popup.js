@@ -1,5 +1,7 @@
 let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
 
+let isSubscribed = false;
+
 document.addEventListener("DOMContentLoaded", () => {
   chrome.storage.local.get(
     ["capturedImage", "extractedColors", "colorPresets"],
@@ -93,6 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
 
+          if (!isSubscribed && presets.length >= 1) {
+            alert(
+              "❌ 구독이 필요합니다! 구독을 하면 2개 이상의 프리셋을 생성할 수 있습니다!"
+            );
+            return;
+          }
+
           presets.push(newPreset);
         } else {
           alert("프리셋을 선택하거나 새 프리셋 이름을 입력하세요.");
@@ -122,6 +131,13 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 });
+
+// ✅ 구독 상태 확인 함수
+function checkSubscriptionStatus() {
+  chrome.storage.sync.get(["isSubscribed"], (data) => {
+    isSubscribed = data.isSubscribed || false;
+  });
+}
 
 // ✅ 색상 선택/해제 기능 (체크박스 대신 버튼 사용)
 function toggleColorSelection(color, button) {
