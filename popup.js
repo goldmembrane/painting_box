@@ -1,4 +1,5 @@
 let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
+let selectedColorNames = {};
 
 let isSubscribed = false;
 
@@ -72,10 +73,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // ✅ selectedColorNames 데이터를 {"변경이름": "색상코드"} 형태로 변환
+      let invertedColorNames = {};
+      Object.entries(selectedColorNames).forEach(([hex, name]) => {
+        invertedColorNames[name || hex] = hex; // ✅ 이름이 없으면 HEX 코드 자체를 키로 사용
+      });
+
       let newPreset = {
         id: Date.now(),
         name: newPresetName,
         colors: Array.from(selectedColors),
+        colorNames: invertedColorNames, // ✅ 색상 이름 포함하여 저장
       };
 
       chrome.storage.local.get(["colorPresets"], (data) => {
@@ -120,6 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.storage.local.set({ colorPresets: presets }, () => {
           console.log("✅ 프리셋 저장 완료:", presets);
           selectedColors.clear();
+          selectedColorNames = {}; // ✅ 저장 후 색상 이름 초기화
           updateSelectedColorsPreview();
           resetButtons();
 
@@ -140,21 +149,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-// ✅ 구독 상태 확인 함수
-function checkSubscriptionStatus() {
-  chrome.storage.sync.get(["isSubscribed"], (data) => {
-    isSubscribed = data.isSubscribed || false;
-  });
-}
-
-// ✅ 색상 선택/해제 기능 (체크박스 대신 버튼 사용)
-function toggleColorSelection(color, button) {
+// ✅ 색상 선택/해제 기능 (이름 입력 지원)
+function toggleColorSelection(color, button, inputField) {
   if (selectedColors.has(color)) {
     selectedColors.delete(color);
+    delete selectedColorNames[(inputField && inputField.value.trim()) || color]; // ✅ 입력된 이름도 제거
     button.classList.remove("selected");
     button.innerText = "선택";
   } else {
     selectedColors.add(color);
+    selectedColorNames[(inputField && inputField.value.trim()) || color] =
+      color; // ✅ "이름": "색상코드" 형태로 저장
     button.classList.add("selected");
     button.innerText = "선택됨";
   }
@@ -186,22 +191,27 @@ function updateSelectedColorsPreview() {
     colorBox.classList.add("selected-color");
     colorBox.style.backgroundColor = color;
 
-    let hexText = document.createElement("span");
-    hexText.classList.add("hex-text");
-    hexText.innerText = color;
+    let colorInput = document.createElement("input");
+    colorInput.classList.add("hex-text");
+    colorInput.type = "text";
+    colorInput.value = selectedColorNames[color] || color; // ✅ 기본값은 HEX 코드
+    colorInput.addEventListener("input", (event) => {
+      selectedColorNames[color] = event.target.value.trim() || color;
+    });
 
     let removeBtn = document.createElement("button");
     removeBtn.classList.add("remove-btn");
     removeBtn.innerText = "삭제";
     removeBtn.onclick = () => {
       selectedColors.delete(color);
+      delete selectedColorNames[color]; // ✅ 삭제 시 이름도 제거
       updateSelectedColorsPreview();
       resetButtons();
     };
 
     colorContainer.appendChild(colorInformation);
     colorInformation.appendChild(colorBox);
-    colorInformation.appendChild(hexText);
+    colorInformation.appendChild(colorInput);
     colorContainer.appendChild(removeBtn);
 
     selectedColorsContainer.appendChild(colorContainer);
@@ -362,6 +372,12 @@ function createColorGroup(title, colors, container) {
     let textBox = document.createElement("div");
     textBox.classList.add("color-text");
     textBox.innerText = `${color}\n${rgbText}`;
+
+    // let colorInput = document.createElement("input");
+    // colorInput.classList.add("color-name-input");
+    // colorInput.type = "text";
+    // colorInput.placeholder = "이름 입력 (선택)";
+    // colorInput.dataset.color = color;
 
     let saveBtn = document.createElement("button");
     saveBtn.innerText = "선택";

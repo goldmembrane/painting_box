@@ -163,24 +163,23 @@ function showPresetDetails(presetIndex) {
     let colorList = document.getElementById("colorList");
     colorList.innerHTML = "";
 
-    preset.colors.forEach((color) => {
+    Object.entries(preset.colorNames || {}).forEach(([name, hex]) => {
       let colorDiv = document.createElement("div");
       colorDiv.classList.add("color-item");
 
       let colorBox = document.createElement("div");
       colorBox.classList.add("color-box");
-      colorBox.style.backgroundColor = color;
+      colorBox.style.backgroundColor = hex;
 
       let colorNameInput = document.createElement("input");
       colorNameInput.classList.add("color-name-input");
       colorNameInput.type = "text";
       colorNameInput.placeholder = "이름 입력";
-      colorNameInput.dataset.color = color;
+      colorNameInput.dataset.color = name;
       colorNameInput.disabled = true; // 기본적으로 비활성화
 
       // ✅ 저장된 색상 이름 불러오기
-      let storedName = preset.colorNames ? preset.colorNames[color] : "";
-      colorNameInput.value = storedName || "";
+      colorNameInput.value = name || "";
 
       // ✅ 입력된 이름을 임시 저장 객체에 저장
       colorNameInput.addEventListener("input", (event) => {
@@ -270,9 +269,9 @@ function deletePreset(presetId) {
 function encryptColorsWithAES(preset) {
   let colorData = {}; // ✅ 색상 이름 + HEX 코드 저장용 객체
 
-  preset.colors.forEach((color) => {
-    let colorName = preset.colorNames?.[color] || color; // 저장된 색상 이름이 없으면 HEX 코드 사용
-    colorData[colorName] = color; // { "빨강": "#FF0000", "초록": "#00FF00" } 형식으로 저장
+  Object.entries(preset.colorNames || {}).forEach(([name, hex]) => {
+    let colorName = name || hex; // 저장된 색상 이름이 없으면 HEX 코드 사용
+    colorData[colorName] = hex; // { "빨강": "#FF0000", "초록": "#00FF00" } 형식으로 저장
   });
 
   let jsonString = JSON.stringify(colorData);
