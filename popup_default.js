@@ -107,14 +107,15 @@ function loadPresets() {
         let colorPreviewContainer = document.createElement("div");
         colorPreviewContainer.classList.add("color-list-container");
 
-        preset.colors.forEach((color) => {
+        // ✅ `colorNames` 객체에서 이름과 HEX 코드 가져오기
+        Object.entries(preset.colorNames || {}).forEach(([name, hex]) => {
           let colorPreview = document.createElement("div");
           colorPreview.classList.add("color-preview");
-          colorPreview.style.backgroundColor = color;
+          colorPreview.style.backgroundColor = hex;
 
           let colorName = document.createElement("span");
           colorName.classList.add("color-name");
-          colorName.innerText = preset.colorNames?.[color] || "";
+          colorName.innerText = name || "이름 없음"; // ✅ 색상 이름 표시
 
           let colorItem = document.createElement("div");
           colorItem.classList.add("preset-preview");
@@ -130,47 +131,6 @@ function loadPresets() {
           showPresetDetails(presetIndex);
         });
 
-        // let colorPreview = document.createElement("div");
-        // colorPreview.classList.add("color-preview");
-
-        // let colorList = document.createElement("div");
-
-        // preset.colors.forEach((color) => {
-        //   let colorDiv = document.createElement("div");
-        //   colorDiv.classList.add("color-item");
-
-        //   let colorBox = document.createElement("div");
-        //   colorBox.classList.add("color-box");
-        //   colorBox.style.backgroundColor = color;
-
-        //   let colorNameInput = document.createElement("input");
-        //   colorNameInput.classList.add("color-name-input");
-        //   colorNameInput.type = "text";
-        //   colorNameInput.placeholder = "이름 입력";
-        //   colorNameInput.dataset.presetIndex = presetIndex;
-        //   colorNameInput.dataset.color = color; // ✅ 색상 HEX 코드 저장
-
-        //   // ✅ 저장된 색상 이름 불러오기
-        //   let storedName = preset.colorNames ? preset.colorNames[color] : "";
-        //   colorNameInput.value = storedName || "";
-
-        //   // ✅ 입력된 이름을 임시 저장 객체에 저장
-        //   colorNameInput.addEventListener("input", (event) => {
-        //     let presetIdx = event.target.dataset.presetIndex;
-        //     let colorHex = event.target.dataset.color;
-        //     let newName = event.target.value;
-
-        //     if (!colorNameChanges[presetIdx]) {
-        //       colorNameChanges[presetIdx] = {};
-        //     }
-        //     colorNameChanges[presetIdx][colorHex] = newName;
-        //   });
-
-        //   colorDiv.appendChild(colorBox);
-        //   colorDiv.appendChild(colorNameInput);
-        //   colorList.appendChild(colorDiv);
-        // });
-
         let deleteBtn = document.createElement("button");
         deleteBtn.innerText = "삭제";
         deleteBtn.onclick = () => deletePreset(preset.id);
@@ -178,11 +138,7 @@ function loadPresets() {
         // ✅ "코드로 보내기" 버튼 추가
         let encryptBtn = document.createElement("button");
         encryptBtn.innerText = "코드로 보내기";
-        encryptBtn.onclick = () => encryptAndCopyToClipboard(preset.colors);
-
-        // presetDiv.appendChild(presetTitle);
-        // presetDiv.appendChild(colorList);
-        // presetDiv.appendChild(saveButton);
+        encryptBtn.onclick = () => encryptAndCopyToClipboard(preset);
 
         presetDiv.appendChild(presetTitle);
         presetDiv.appendChild(colorPreviewContainer);
@@ -310,16 +266,23 @@ function deletePreset(presetId) {
   });
 }
 
-// ✅ HEX 색상 리스트를 AES-256으로 암호화하는 함수
-function encryptColorsWithAES(colors) {
-  let jsonString = JSON.stringify(colors);
+// ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
+function encryptColorsWithAES(preset) {
+  let colorData = {}; // ✅ 색상 이름 + HEX 코드 저장용 객체
+
+  preset.colors.forEach((color) => {
+    let colorName = preset.colorNames?.[color] || color; // 저장된 색상 이름이 없으면 HEX 코드 사용
+    colorData[colorName] = color; // { "빨강": "#FF0000", "초록": "#00FF00" } 형식으로 저장
+  });
+
+  let jsonString = JSON.stringify(colorData);
   let encrypted = CryptoJS.AES.encrypt(jsonString, encryptionKey).toString();
   return encrypted;
 }
 
 // ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
-function encryptAndCopyToClipboard(colors) {
-  let encryptedCode = encryptColorsWithAES(colors);
+function encryptAndCopyToClipboard(preset) {
+  let encryptedCode = encryptColorsWithAES(preset);
 
   let inputField = document.getElementById("encryptedCode");
   inputField.value = encryptedCode; // ✅ input 필드에 암호화된 코드 표시
@@ -360,14 +323,14 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
 
   let decryptedColors = decryptColorsWithAES(encryptedCode);
 
-  if (
-    !decryptedColors ||
-    !Array.isArray(decryptedColors) ||
-    decryptedColors.length === 0
-  ) {
+  if (!decryptedColors || Object.keys(decryptedColors).length === 0) {
     alert("❌ 올바른 암호화 코드가 아닙니다!");
     return;
   }
+
+  // ✅ 색상 HEX 코드만 추출하여 colors 배열 생성
+  let colorsArray = Object.values(decryptedColors);
+  let colorNamesObject = decryptedColors; // `{ "이름": "HEX 코드" }` 구조 유지
 
   // ✅ 새로운 프리셋 이름 설정 (자동 생성)
   let newPresetName = `복호화 프리셋 ${Date.now()}`;
@@ -378,7 +341,8 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
     let newPreset = {
       id: Date.now(),
       name: newPresetName,
-      colors: decryptedColors,
+      colors: colorsArray, // HEX 코드 리스트
+      colorNames: colorNamesObject, // ✅ 이름 포함된 색상 데이터
     };
 
     presets.push(newPreset);
