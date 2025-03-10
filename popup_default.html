@@ -9,6 +9,11 @@
         padding: 10px;
         width: 300px;
       }
+      .preset-preview {
+        display: flex;
+        align-items: center;
+        margin-top: 5px;
+      }
       .preset-item {
         display: flex;
         flex-direction: column;
@@ -17,17 +22,36 @@
         border: 1px solid #ddd;
         border-radius: 5px;
         margin-bottom: 10px;
+        cursor: pointer;
       }
       .color-preview {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+        border-radius: 50%;
+      }
+      .color-list-container {
         display: flex;
-        gap: 5px;
         flex-wrap: wrap;
+        gap: 5px;
+      }
+      .hidden {
+        display: none;
+      }
+      .color-item {
+        display: flex;
+        align-items: center;
+        margin-top: 5px;
       }
       .color-box {
         width: 30px;
         height: 30px;
         border-radius: 5px;
         border: 1px solid #ddd;
+      }
+      .color-name-input {
+        margin-left: 5px;
+        padding: 2px;
       }
       input {
         padding: 5px;
@@ -44,6 +68,14 @@
       button:hover {
         background-color: #0056b3;
       }
+      .save-button {
+        margin-top: 10px;
+        padding: 5px;
+        background: blue;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -57,6 +89,13 @@
 
     <h2>저장된 프리셋</h2>
     <div id="presetList"></div>
+
+    <div id="presetDetails" class="hidden">
+      <h2 id="presetTitle"></h2>
+      <div id="colorList"></div>
+      <button id="toggleEditMode" class="save-button">이름 변경</button>
+      <button id="backToList" class="save-button">뒤로가기</button>
+    </div>
 
     <h3>암호화된 코드</h3>
     <input type="text" id="encryptedCode" readonly />

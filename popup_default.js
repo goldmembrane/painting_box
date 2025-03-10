@@ -21,7 +21,17 @@ const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
   checkSubscriptionStatus();
+  document
+    .getElementById("toggleEditMode")
+    .addEventListener("click", toggleEditMode);
+  document
+    .getElementById("backToList")
+    .addEventListener("click", showPresetList);
 });
+
+let selectedPresetIndex = null;
+let isEditing = false; // ✅ 현재 이름 변경 모드 여부
+let colorNameChanges = {}; // ✅ 변경된 색상 이름을 임시 저장하는 객체
 
 // ✅ `chrome.storage.onChanged` 리스너 추가 (자동 업데이트)
 chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -81,22 +91,85 @@ function loadPresets() {
     presetContainer.innerHTML = "";
 
     if (data.colorPresets && data.colorPresets.length > 0) {
-      data.colorPresets.forEach((preset) => {
+      data.colorPresets.forEach((preset, presetIndex) => {
+        let presetItemContainer = document.createElement("div");
+        presetItemContainer.classList.add("preset-item-container");
+
         let presetDiv = document.createElement("div");
         presetDiv.classList.add("preset-item");
+        presetDiv.dataset.presetIndex = presetIndex;
 
-        let presetTitle = document.createElement("h3");
+        // ✅ 프리셋 제목
+        let presetTitle = document.createElement("strong");
         presetTitle.innerText = preset.name;
 
-        let colorPreview = document.createElement("div");
-        colorPreview.classList.add("color-preview");
+        // ✅ 색상 미리보기 추가
+        let colorPreviewContainer = document.createElement("div");
+        colorPreviewContainer.classList.add("color-list-container");
 
         preset.colors.forEach((color) => {
-          let colorBox = document.createElement("div");
-          colorBox.classList.add("color-box");
-          colorBox.style.backgroundColor = color;
-          colorPreview.appendChild(colorBox);
+          let colorPreview = document.createElement("div");
+          colorPreview.classList.add("color-preview");
+          colorPreview.style.backgroundColor = color;
+
+          let colorName = document.createElement("span");
+          colorName.classList.add("color-name");
+          colorName.innerText = preset.colorNames?.[color] || "";
+
+          let colorItem = document.createElement("div");
+          colorItem.classList.add("preset-preview");
+          colorItem.appendChild(colorPreview);
+          colorItem.appendChild(colorName);
+
+          colorPreviewContainer.appendChild(colorItem);
         });
+
+        // ✅ 프리셋 클릭 시 상세보기 모드 활성화
+        presetDiv.addEventListener("click", () => {
+          selectedPresetIndex = presetIndex;
+          showPresetDetails(presetIndex);
+        });
+
+        // let colorPreview = document.createElement("div");
+        // colorPreview.classList.add("color-preview");
+
+        // let colorList = document.createElement("div");
+
+        // preset.colors.forEach((color) => {
+        //   let colorDiv = document.createElement("div");
+        //   colorDiv.classList.add("color-item");
+
+        //   let colorBox = document.createElement("div");
+        //   colorBox.classList.add("color-box");
+        //   colorBox.style.backgroundColor = color;
+
+        //   let colorNameInput = document.createElement("input");
+        //   colorNameInput.classList.add("color-name-input");
+        //   colorNameInput.type = "text";
+        //   colorNameInput.placeholder = "이름 입력";
+        //   colorNameInput.dataset.presetIndex = presetIndex;
+        //   colorNameInput.dataset.color = color; // ✅ 색상 HEX 코드 저장
+
+        //   // ✅ 저장된 색상 이름 불러오기
+        //   let storedName = preset.colorNames ? preset.colorNames[color] : "";
+        //   colorNameInput.value = storedName || "";
+
+        //   // ✅ 입력된 이름을 임시 저장 객체에 저장
+        //   colorNameInput.addEventListener("input", (event) => {
+        //     let presetIdx = event.target.dataset.presetIndex;
+        //     let colorHex = event.target.dataset.color;
+        //     let newName = event.target.value;
+
+        //     if (!colorNameChanges[presetIdx]) {
+        //       colorNameChanges[presetIdx] = {};
+        //     }
+        //     colorNameChanges[presetIdx][colorHex] = newName;
+        //   });
+
+        //   colorDiv.appendChild(colorBox);
+        //   colorDiv.appendChild(colorNameInput);
+        //   colorList.appendChild(colorDiv);
+        // });
 
         let deleteBtn = document.createElement("button");
         deleteBtn.innerText = "삭제";
@@ -107,16 +180,123 @@ function loadPresets() {
         encryptBtn.innerText = "코드로 보내기";
         encryptBtn.onclick = () => encryptAndCopyToClipboard(preset.colors);
 
+        // presetDiv.appendChild(presetTitle);
+        // presetDiv.appendChild(colorList);
+        // presetDiv.appendChild(saveButton);
+
         presetDiv.appendChild(presetTitle);
-        presetDiv.appendChild(colorPreview);
-        presetDiv.appendChild(deleteBtn);
-        presetDiv.appendChild(encryptBtn);
-        presetContainer.appendChild(presetDiv);
+        presetDiv.appendChild(colorPreviewContainer);
+        presetItemContainer.appendChild(presetDiv);
+        presetItemContainer.appendChild(encryptBtn);
+        presetItemContainer.appendChild(deleteBtn);
+        presetContainer.appendChild(presetItemContainer);
       });
     } else {
       presetContainer.innerHTML = "<p>저장된 프리셋이 없습니다.</p>";
     }
   });
+}
+
+// ✅ 프리셋 상세보기 모드 표시
+function showPresetDetails(presetIndex) {
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let presets = data.colorPresets || [];
+    let preset = presets[presetIndex];
+
+    document.getElementById("presetTitle").innerText = preset.name;
+    let colorList = document.getElementById("colorList");
+    colorList.innerHTML = "";
+
+    preset.colors.forEach((color) => {
+      let colorDiv = document.createElement("div");
+      colorDiv.classList.add("color-item");
+
+      let colorBox = document.createElement("div");
+      colorBox.classList.add("color-box");
+      colorBox.style.backgroundColor = color;
+
+      let colorNameInput = document.createElement("input");
+      colorNameInput.classList.add("color-name-input");
+      colorNameInput.type = "text";
+      colorNameInput.placeholder = "이름 입력";
+      colorNameInput.dataset.color = color;
+      colorNameInput.disabled = true; // 기본적으로 비활성화
+
+      // ✅ 저장된 색상 이름 불러오기
+      let storedName = preset.colorNames ? preset.colorNames[color] : "";
+      colorNameInput.value = storedName || "";
+
+      // ✅ 입력된 이름을 임시 저장 객체에 저장
+      colorNameInput.addEventListener("input", (event) => {
+        let colorHex = event.target.dataset.color;
+        let newName = event.target.value;
+        colorNameChanges[colorHex] = newName;
+      });
+
+      colorDiv.appendChild(colorBox);
+      colorDiv.appendChild(colorNameInput);
+      colorList.appendChild(colorDiv);
+    });
+
+    document.getElementById("presetList").classList.add("hidden");
+    document.getElementById("presetDetails").classList.remove("hidden");
+    document.getElementById("toggleEditMode").innerText = "이름 변경"; // ✅ 초기 버튼 상태
+    isEditing = false;
+  });
+}
+
+// ✅ "이름 변경" 버튼 클릭 시 편집 모드 활성화
+function toggleEditMode() {
+  let inputs = document.querySelectorAll(".color-name-input");
+  let button = document.getElementById("toggleEditMode");
+
+  if (isEditing) {
+    // ✅ 저장 기능 실행
+    savePresetColorNames();
+    button.innerText = "이름 변경";
+  } else {
+    // ✅ 편집 모드 활성화
+    inputs.forEach((input) => {
+      input.disabled = false;
+      input.style.display = "inline-block"; // 입력 필드 표시
+    });
+    button.innerText = "저장";
+  }
+
+  isEditing = !isEditing;
+}
+
+// ✅ 변경된 색상 이름을 저장
+function savePresetColorNames() {
+  if (selectedPresetIndex === null) return;
+
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let presets = data.colorPresets || [];
+    let preset = presets[selectedPresetIndex];
+
+    if (!preset.colorNames) {
+      preset.colorNames = {};
+    }
+
+    Object.keys(colorNameChanges).forEach((colorHex) => {
+      preset.colorNames[colorHex] = colorNameChanges[colorHex];
+    });
+
+    // ✅ 변경된 데이터 저장
+    chrome.storage.local.set({ colorPresets: presets }, () => {
+      console.log(
+        `✅ 프리셋 ${selectedPresetIndex}의 색상 이름이 저장되었습니다.`
+      );
+      alert("✅ 색상 이름이 저장되었습니다!");
+      colorNameChanges = {}; // ✅ 저장 후 임시 데이터 초기화
+    });
+  });
+}
+
+// ✅ 프리셋 목록으로 돌아가기
+function showPresetList() {
+  document.getElementById("presetList").classList.remove("hidden");
+  document.getElementById("presetDetails").classList.add("hidden");
 }
 
 // ✅ 프리셋 삭제 기능
