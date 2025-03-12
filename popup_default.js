@@ -12,6 +12,13 @@ let isSubscribed = false;
 function checkSubscriptionStatus() {
   chrome.storage.sync.get(["isSubscribed"], (data) => {
     isSubscribed = data.isSubscribed || false;
+    const subscriptionBanner = document.getElementById("subscriptionBanner");
+
+    if (!isSubscribed) {
+      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+    } else {
+      subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+    }
   });
 }
 
@@ -62,9 +69,13 @@ document.getElementById("savePreset").addEventListener("click", () => {
 
     // ✅ 구독이 없고 프리셋 개수가 2개 이상이면 제한
     if (!isSubscribed && presets.length >= 1) {
-      alert(
-        "❌ 구독이 필요합니다! 구독을 하면 2개 이상의 프리셋을 생성할 수 있습니다!"
-      );
+      const banner = document.getElementById("subscriptionBanner");
+      banner.classList.remove("hidden"); // ✅ 배너 표시
+
+      // ✅ 10초 후 배너 자동 숨김
+      setTimeout(() => {
+        banner.classList.add("hidden");
+      }, 10000); // 10초 후 실행 (10000ms)
       return;
     }
 
@@ -355,4 +366,9 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
       alert(`"${newPresetName}" 프리셋이 저장되었습니다!`);
     });
   });
+});
+
+// ✅ 구독 버튼 클릭 시 PayPal 구독 페이지로 이동
+document.getElementById("subscribeNow").addEventListener("click", () => {
+  window.open("https://www.paypal.com/your-subscription-page", "_blank");
 });
