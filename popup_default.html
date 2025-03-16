@@ -9,6 +9,30 @@
         padding: 10px;
         width: 300px;
       }
+      .hidden {
+        display: none;
+      }
+
+      /* 네비게이션 바 스타일 */
+      .navBar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .navBar button {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .back-btn {
+        font-size: 16px;
+      }
+
       #subscriptionBanner {
         background-color: #ffeeba;
         padding: 10px;
@@ -32,6 +56,34 @@
 
       #subscriptionBanner button:hover {
         background-color: #0056b3;
+      }
+      /* 색상 띠 스타일 */
+      .color-strip {
+        display: flex;
+        height: 20px;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 5px;
+      }
+
+      .color-block {
+        flex: 1;
+        height: 100%;
+      }
+      .color-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .code-section {
+        margin-top: 5px;
+      }
+
+      .copy-code {
+        width: 100%;
+        font-size: 12px;
+        text-align: center;
       }
       .preset-preview {
         display: flex;
@@ -65,13 +117,17 @@
       .color-item {
         display: flex;
         align-items: center;
-        margin-top: 5px;
+        gap: 10px;
+        padding: 5px;
+      }
+      .color-container {
+        border: 1px solid #ddd;
+        border-radius: 5px;
       }
       .color-box {
         width: 30px;
         height: 30px;
         border-radius: 5px;
-        border: 1px solid #ddd;
       }
       .color-name-input {
         margin-left: 5px;
@@ -109,22 +165,78 @@
       <button id="subscribeNow">구독하기</button>
     </div>
 
+    <!-- ✅ 메인 네비게이션 바 -->
+    <div id="navBarMain" class="navBar">
+      <span>Palette Box</span>
+      <div>
+        <button id="addPresetBtn">+</button>
+        <button id="toggleDarkMode">🌙</button>
+      </div>
+    </div>
+
+    <!-- ✅ 새 프리셋 네비게이션 바 (초기 숨김) -->
+    <div id="navBarNewPreset" class="navBar hidden">
+      <button id="backToMain" class="back-btn">←</button>
+      <span>새 프리셋 생성</span>
+      <div></div>
+    </div>
+
+    <!-- 
     <h2>프리셋 생성</h2>
     <input type="text" id="presetName" placeholder="프리셋 이름 입력" />
     <button id="savePreset">프리셋 생성</button>
 
+     -->
+
+    <!-- 
+
     <h3>암호화된 코드 입력</h3>
     <input type="text" id="encryptedCodeInput" placeholder="코드 입력" />
     <button id="decodeAndSave">코드 프리셋 저장</button>
+ -->
 
-    <h2>저장된 프리셋</h2>
-    <div id="presetList"></div>
+    <div id="presetContainer">
+      <h2>저장된 프리셋</h2>
+      <div id="presetList"></div>
+    </div>
+
+    <div id="newPresetScreen" class="hidden">
+      <h2>새로운 프리셋 생성</h2>
+
+      <!-- 🎨 프리셋 이름만 받아 생성 -->
+      <div class="section">
+        <h3>이름만 입력하여 생성</h3>
+        <input type="text" id="newPresetName" placeholder="프리셋 이름 입력" />
+        <button id="savePreset">프리셋 생성</button>
+      </div>
+
+      <!-- 🔑 암호화된 코드와 이름을 입력하여 생성 -->
+      <div class="section">
+        <h3>코드로 프리셋 가져오기</h3>
+        <input
+          type="text"
+          id="importPresetName"
+          placeholder="프리셋 이름 입력"
+        />
+        <textarea
+          id="encryptedCodeInput"
+          placeholder="암호화된 코드 입력"
+          rows="3"
+        ></textarea>
+        <button id="decodeAndSave">Import Code</button>
+      </div>
+    </div>
+
+    <div id="navBarDetail" class="navBar hidden">
+      <button id="backToMainPage">←</button>
+      <span id="presetDetailTitle">프리셋 상세</span>
+      <div></div>
+    </div>
 
     <div id="presetDetails" class="hidden">
       <h2 id="presetTitle"></h2>
       <div id="colorList"></div>
       <button id="toggleEditMode" class="save-button">이름 변경</button>
-      <button id="backToList" class="save-button">뒤로가기</button>
     </div>
 
     <h3>암호화된 코드</h3>
