@@ -9,6 +9,105 @@
         padding: 10px;
         width: 300px;
       }
+      .hidden {
+        display: none;
+      }
+      .empty {
+        height: 10px;
+        width: 50px;
+      }
+      /* ✅ 다크모드 스타일 */
+      .dark-mode {
+        background-color: #1e1e1e;
+        color: white;
+      }
+
+      .dark-mode button {
+        background-color: #444;
+        color: white;
+      }
+      .dark-mode button:hover {
+        background-color: #666;
+      }
+
+      .dark-mode-textarea {
+        background-color: #333; /* 다크모드 배경색 */
+        color: white; /* 텍스트 색상 */
+        border: 1px solid #555; /* 테두리 색상 */
+      }
+
+      .dark-mode-input {
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+      }
+
+      /* ✅ 다크모드 버튼 스타일 */
+      #toggleDarkMode {
+        background: transparent;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        transition: color 0.3s;
+      }
+
+      #addPresetBtn {
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        background: transparent;
+        color: #444;
+      }
+
+      #addPresetBtn:hover {
+        background: #bbb;
+      }
+
+      .dark-mode #addPresetBtn {
+        color: #fff;
+      }
+
+      .dark-mode #addPresetBtn:hover {
+        background: #444;
+      }
+
+      .dark-mode #toggleDarkMode {
+        color: white;
+      }
+
+      /* 네비게이션 바 스타일 */
+      .navBar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+      }
+
+      .navBar button {
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .back-btn {
+        font-size: 16px;
+        color: #444;
+      }
+      .back-btn:hover {
+        background: #bbb;
+      }
+
+      .dark-mode .back-btn {
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .dark-mode .back-btn:hover {
+        background: #444;
+      }
+
       #subscriptionBanner {
         background-color: #ffeeba;
         padding: 10px;
@@ -33,10 +132,71 @@
       #subscriptionBanner button:hover {
         background-color: #0056b3;
       }
+
+      #newPresetName {
+        width: 95%;
+        margin-bottom: 10px;
+      }
+
+      #importPresetName {
+        width: 95%;
+        margin-bottom: 10px;
+      }
+
+      /* 색상 띠 스타일 */
+      .color-strip {
+        display: flex;
+        height: 20px;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 5px;
+      }
+
+      .color-block {
+        flex: 1;
+        height: 100%;
+      }
+      .color-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .code-section {
+        margin-top: 5px;
+      }
+      /* 코드 표시 공간 */
+      .code-container {
+        margin-top: 5px;
+        display: none;
+      }
+      .copy-code {
+        width: 100%;
+        font-size: 12px;
+        text-align: center;
+      }
       .preset-preview {
         display: flex;
         align-items: center;
         margin-top: 5px;
+      }
+      /* ✅ 프리셋 상단 영역 (제목 + 삭제 버튼) */
+      .preset-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      /* ✅ X(삭제) 버튼 스타일 */
+      .delete-btn {
+        background: none;
+        border: none;
+        color: gray;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0;
       }
       .preset-item {
         display: flex;
@@ -65,13 +225,17 @@
       .color-item {
         display: flex;
         align-items: center;
-        margin-top: 5px;
+        gap: 10px;
+        padding: 5px;
+      }
+      .color-container {
+        border: 1px solid #ddd;
+        border-radius: 5px;
       }
       .color-box {
         width: 30px;
         height: 30px;
         border-radius: 5px;
-        border: 1px solid #ddd;
       }
       .color-name-input {
         margin-left: 5px;
@@ -92,6 +256,17 @@
       button:hover {
         background-color: #0056b3;
       }
+
+      .delete-btn:hover {
+        color: darkred;
+        background: none;
+      }
+
+      .dark-mode .delete-btn {
+        background: none;
+        color: #fff;
+      }
+
       .save-button {
         margin-top: 10px;
         padding: 5px;
@@ -99,6 +274,60 @@
         color: white;
         border: none;
         cursor: pointer;
+      }
+      /* ✅ 상세보기 화면에서 버튼 컨테이너 */
+      .detail-buttons {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+      }
+
+      .dark-mode-footer {
+        background-color: #333 !important;
+        color: white !important;
+        box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.1);
+      }
+
+      /* ✅ 버튼 스타일 */
+      .detail-buttons button {
+        flex: 1;
+        margin: 0 5px;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
+
+      .detail-buttons button:hover {
+        background-color: #0056b3;
+      }
+
+      #savePreset {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #encryptedCodeInput {
+        width: 98%;
+        margin-bottom: 10px;
+        resize: none;
+      }
+
+      #decodeAndSave {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     </style>
   </head>
@@ -109,26 +338,68 @@
       <button id="subscribeNow">구독하기</button>
     </div>
 
-    <h2>프리셋 생성</h2>
-    <input type="text" id="presetName" placeholder="프리셋 이름 입력" />
-    <button id="savePreset">프리셋 생성</button>
+    <!-- ✅ 메인 네비게이션 바 -->
+    <div id="navBarMain" class="navBar">
+      <h2>Palette Box</h2>
+      <div>
+        <button id="addPresetBtn">+</button>
+        <button id="toggleDarkMode">🌙</button>
+      </div>
+    </div>
 
-    <h3>암호화된 코드 입력</h3>
-    <input type="text" id="encryptedCodeInput" placeholder="코드 입력" />
-    <button id="decodeAndSave">코드 프리셋 저장</button>
+    <!-- ✅ 새 프리셋 네비게이션 바 (초기 숨김) -->
+    <div id="navBarNewPreset" class="navBar hidden">
+      <button id="backToMain" class="back-btn">←</button>
+      <h2>새 프리셋 생성</h2>
+      <div class="empty"></div>
+    </div>
 
-    <h2>저장된 프리셋</h2>
-    <div id="presetList"></div>
+    <div id="presetContainer">
+      <h2>저장된 프리셋</h2>
+      <div id="presetList"></div>
+    </div>
+
+    <div id="newPresetScreen" class="hidden">
+      <!-- 🎨 프리셋 이름만 받아 생성 -->
+      <div class="section">
+        <h3>이름만 입력하여 생성</h3>
+        <input type="text" id="newPresetName" placeholder="프리셋 이름 입력" />
+        <button id="savePreset">프리셋 생성</button>
+      </div>
+
+      <!-- 🔑 암호화된 코드와 이름을 입력하여 생성 -->
+      <div class="section">
+        <h3>코드로 프리셋 가져오기</h3>
+        <input
+          type="text"
+          id="importPresetName"
+          placeholder="프리셋 이름 입력"
+        />
+        <textarea
+          id="encryptedCodeInput"
+          placeholder="암호화된 코드 입력"
+          rows="3"
+        ></textarea>
+        <button id="decodeAndSave">코드로 불러오기</button>
+      </div>
+    </div>
+
+    <div id="navBarDetail" class="navBar hidden">
+      <button id="backToMainPage">←</button>
+      <span id="presetDetailTitle">프리셋 상세</span>
+      <div class="empty"></div>
+    </div>
 
     <div id="presetDetails" class="hidden">
       <h2 id="presetTitle"></h2>
       <div id="colorList"></div>
-      <button id="toggleEditMode" class="save-button">이름 변경</button>
-      <button id="backToList" class="save-button">뒤로가기</button>
-    </div>
 
-    <h3>암호화된 코드</h3>
-    <input type="text" id="encryptedCode" readonly />
+      <!-- ✅ 하단 버튼 컨테이너 -->
+      <div class="detail-buttons" id="presetDetailFooter">
+        <button id="toggleEditMode">편집하기</button>
+        <button id="sendToCode">코드로 보내기</button>
+      </div>
+    </div>
 
     <script src="popup_default.js"></script>
   </body>
