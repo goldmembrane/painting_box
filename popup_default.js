@@ -51,11 +51,59 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backToMainPage").addEventListener("click", () => {
     showPresetList();
   });
+
+  chrome.storage.local.get(["darkMode"], (data) => {
+    if (data.darkMode) {
+      document.body.classList.add("dark-mode");
+      document.getElementById("toggleDarkMode").innerText = "☀️";
+      applyDarkMode();
+    }
+  });
+
+  // ✅ 다크모드 버튼 클릭 이벤트
+  document.getElementById("toggleDarkMode").addEventListener("click", () => {
+    let isDarkMode = document.body.classList.toggle("dark-mode");
+
+    // ✅ 버튼 아이콘 변경
+    document.getElementById("toggleDarkMode").innerText = isDarkMode
+      ? "☀️"
+      : "🌙";
+
+    // ✅ 다크모드 상태 저장
+    chrome.storage.local.set({ darkMode: isDarkMode });
+
+    // ✅ 다크모드 스타일 적용
+    applyDarkMode();
+  });
 });
 
 let selectedPresetIndex = null;
 let isEditing = false; // ✅ 현재 이름 변경 모드 여부
 let colorNameChanges = {}; // ✅ 변경된 색상 이름을 임시 저장하는 객체
+
+// ✅ 다크모드 스타일 적용 함수
+function applyDarkMode() {
+  let isDarkMode = document.body.classList.contains("dark-mode");
+  let footer = document.getElementById("presetDetailFooter");
+
+  if (isDarkMode) {
+    footer.classList.add("dark-mode-footer");
+    document.querySelectorAll("textarea").forEach((textarea) => {
+      textarea.classList.add("dark-mode-textarea");
+    });
+    document.querySelectorAll("input").forEach((input) => {
+      input.classList.add("dark-mode-input");
+    });
+  } else {
+    footer.classList.remove("dark-mode-footer");
+    document.querySelectorAll("textarea").forEach((textarea) => {
+      textarea.classList.remove("dark-mode-textarea");
+    });
+    document.querySelectorAll("input").forEach((input) => {
+      input.classList.remove("dark-mode-input");
+    });
+  }
+}
 
 // ✅ `chrome.storage.onChanged` 리스너 추가 (자동 업데이트)
 chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -133,9 +181,27 @@ function loadPresets() {
         presetDiv.classList.add("preset-item");
         presetDiv.dataset.presetIndex = presetIndex;
 
+        let presetHeader = document.createElement("div");
+        presetHeader.classList.add("preset-header");
+
         // ✅ 프리셋 제목
         let presetTitle = document.createElement("strong");
         presetTitle.innerText = preset.name;
+
+        // ✅ 삭제(X) 버튼 (프리셋 상단 우측)
+        let deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.innerHTML = "&times;"; // X 기호
+        deleteBtn.style.padding = "5px";
+        deleteBtn.style.borderRadius = "100px";
+        deleteBtn.style.fontSize = "18px";
+        deleteBtn.onclick = (event) => {
+          event.stopPropagation(); // ✅ 상세보기 이벤트 방지
+          deletePreset(preset.id);
+        };
+
+        presetHeader.appendChild(presetTitle);
+        presetHeader.appendChild(deleteBtn);
 
         // ✅ 색상 띠 (같은 너비를 차지하도록)
         let colorStrip = document.createElement("div");
@@ -159,19 +225,41 @@ function loadPresets() {
           showPresetDetails(presetIndex);
         });
 
-        let deleteBtn = document.createElement("button");
-        deleteBtn.innerText = "삭제";
-        deleteBtn.onclick = () => deletePreset(preset.id);
+        // ✅ 코드 컨테이너 (처음에는 숨김)
+        let codeContainer = document.createElement("div");
+        codeContainer.classList.add("code-container", "hidden");
+        codeContainer.style.marginTop = "20px";
+        codeContainer.style.display = "none"; // ✅ 초기에는 숨김
+
+        let codeTextarea = document.createElement("textarea");
+        codeTextarea.readOnly = true;
+        codeTextarea.style.resize = "none";
+        codeTextarea.style.height = "80px";
+        codeTextarea.style.width = "270px";
+        codeTextarea.addEventListener("click", (event) => {
+          event.stopPropagation();
+        });
+
+        codeContainer.appendChild(codeTextarea);
 
         // ✅ "코드로 보내기" 버튼 추가
         let encryptBtn = document.createElement("button");
+        encryptBtn.style.marginTop = "20px";
         encryptBtn.innerText = "코드로 보내기";
-        encryptBtn.onclick = () => encryptAndCopyToClipboard(preset);
+        encryptBtn.onclick = (event) => {
+          event.stopPropagation();
+          encryptAndCopyToClipboard(
+            preset,
+            codeContainer,
+            codeTextarea,
+            encryptBtn
+          );
+        };
 
-        presetDiv.appendChild(presetTitle);
+        presetDiv.appendChild(presetHeader);
         presetDiv.appendChild(colorStrip);
         presetDiv.appendChild(encryptBtn);
-        presetDiv.appendChild(deleteBtn);
+        presetDiv.appendChild(codeContainer);
         presetDiv.appendChild(colorPreviewContainer);
         presetItemContainer.appendChild(presetDiv);
         presetContainer.appendChild(presetItemContainer);
@@ -192,10 +280,15 @@ function showPresetDetails(presetIndex) {
 
     document.getElementById("presetDetailTitle").innerText = preset.name;
     let colorList = document.getElementById("colorList");
+    colorList.style.paddingBottom = "70px";
     colorList.innerHTML = "";
 
     let colorContainer = document.createElement("div");
     colorContainer.classList.add("color-container");
+
+    console.log(Object.entries(preset.colorNames || {}));
+
+    colorNameChanges = {}; // ✅ 기존 데이터 초기화 (중복 방지)
 
     Object.entries(preset.colorNames || {}).forEach(([name, hex]) => {
       let colorDiv = document.createElement("div");
@@ -210,16 +303,20 @@ function showPresetDetails(presetIndex) {
       colorNameInput.type = "text";
       colorNameInput.placeholder = "이름 입력";
       colorNameInput.dataset.color = name;
+      colorNameInput.dataset.hex = hex;
       colorNameInput.disabled = true; // 기본적으로 비활성화
 
       // ✅ 저장된 색상 이름 불러오기
       colorNameInput.value = name || "";
 
-      // ✅ 입력된 이름을 임시 저장 객체에 저장
+      // ✅ 입력된 이름을 `{ 색상코드: 새이름 }` 형태로 저장
       colorNameInput.addEventListener("input", (event) => {
-        let colorHex = event.target.dataset.color;
-        let newName = event.target.value;
-        colorNameChanges[colorHex] = newName;
+        let colorHex = event.target.dataset.hex;
+        let newName = event.target.value.trim();
+
+        if (newName) {
+          colorNameChanges[colorHex] = newName; // ✅ `{ 색상코드: 새이름 }`으로 저장
+        }
       });
 
       colorDiv.appendChild(colorBox);
@@ -269,9 +366,32 @@ function savePresetColorNames() {
       preset.colorNames = {};
     }
 
-    Object.keys(colorNameChanges).forEach((colorHex) => {
-      preset.colorNames[colorHex] = colorNameChanges[colorHex];
+    let updatedColorNames = {}; // ✅ `{ 새이름: 색상코드 }`로 저장할 객체
+    let colorHexToOldName = {}; // ✅ `{ 색상코드: 기존이름 }` 매핑을 위한 객체
+
+    // ✅ 기존 데이터에서 `{ 색상코드: 기존이름 }` 형태로 변환
+    Object.entries(preset.colorNames).forEach(([oldName, colorHex]) => {
+      colorHexToOldName[colorHex] = oldName; // 기존 이름 매핑
     });
+
+    // ✅ 변경된 데이터를 `{ 색상코드: 새이름 }`에서 `{ 새이름: 색상코드 }`로 변환
+    Object.entries(colorNameChanges).forEach(([colorHex, newName]) => {
+      if (newName) {
+        // ✅ 기존 이름이 있으면 삭제하고 새 이름으로 대체
+        if (colorHexToOldName[colorHex]) {
+          delete preset.colorNames[colorHexToOldName[colorHex]]; // ✅ 기존 키 제거
+        }
+        colorHexToOldName[colorHex] = newName; // ✅ 새로운 이름 저장
+      }
+    });
+
+    // ✅ `{ 색상코드: 새이름 }`을 `{ 새이름: 색상코드 }`로 변환하여 저장
+    Object.entries(colorHexToOldName).forEach(([colorHex, newName]) => {
+      updatedColorNames[newName] = colorHex;
+    });
+
+    // ✅ 변경 사항을 프리셋에 반영
+    preset.colorNames = updatedColorNames;
 
     // ✅ 변경된 데이터 저장
     chrome.storage.local.set({ colorPresets: presets }, () => {
@@ -319,22 +439,59 @@ function encryptColorsWithAES(preset) {
 }
 
 // ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
-function encryptAndCopyToClipboard(preset) {
-  let encryptedCode = encryptColorsWithAES(preset);
+function encryptAndCopyToClipboard(
+  preset,
+  codeContainer,
+  codeTextarea,
+  toggleCodeBtn
+) {
+  if (codeContainer.style.display === "none") {
+    let encryptedCode = encryptColorsWithAES(preset);
+    codeTextarea.value = encryptedCode;
+    codeContainer.classList.remove("hidden"); // ✅ 코드 컨테이너 보이기
+    codeContainer.style.display = "block"; // ✅ display 속성 추가
 
-  let inputField = document.getElementById("encryptedCode");
-  inputField.value = encryptedCode; // ✅ input 필드에 암호화된 코드 표시
+    // ✅ 버튼 텍스트 변경
+    toggleCodeBtn.innerText = "코드 숨기기";
 
-  // ✅ 클립보드에 복사
-  navigator.clipboard
-    .writeText(encryptedCode)
-    .then(() => {
-      alert("🔒 암호화된 코드가 복사되었습니다!");
-    })
-    .catch((err) => {
-      console.error("❌ 클립보드 복사 실패:", err);
-    });
+    // ✅ 클립보드에 복사
+    navigator.clipboard
+      .writeText(encryptedCode)
+      .then(() => {
+        alert("🔒 암호화된 코드가 복사되었습니다!");
+      })
+      .catch((err) => {
+        console.error("❌ 클립보드 복사 실패:", err);
+      });
+  } else {
+    // ✅ 코드 숨기기
+    codeContainer.classList.add("hidden");
+    codeContainer.style.display = "none";
+
+    // ✅ 버튼 텍스트 변경
+    toggleCodeBtn.innerText = "코드로 보내기";
+  }
 }
+
+// ✅ 상세보기 화면에서 "코드로 보내기" 버튼 클릭 시 실행
+document.getElementById("sendToCode").addEventListener("click", () => {
+  if (selectedPresetIndex === null) return;
+
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let preset = data.colorPresets[selectedPresetIndex];
+    let encryptedCode = encryptColorsWithAES(preset);
+
+    // ✅ 클립보드에 복사
+    navigator.clipboard
+      .writeText(encryptedCode)
+      .then(() => {
+        alert("🔒 암호화된 코드가 복사되었습니다!");
+      })
+      .catch((err) => {
+        console.error("❌ 클립보드 복사 실패:", err);
+      });
+  });
+});
 
 // ✅ AES-256 암호화된 데이터를 복호화하는 함수
 function decryptColorsWithAES(encryptedString) {
