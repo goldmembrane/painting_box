@@ -7,6 +7,30 @@
       body {
         font-family: Arial, sans-serif;
         padding: 10px;
+        width: 600px;
+      }
+      .hidden {
+        display: none;
+      }
+      .top-navigator {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .whole-container {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+      }
+      .extract-mode-container {
+        display: flex;
+        flex-direction: column;
+        flex: 0.5;
+      }
+      .extract-container {
+        display: flex;
+        flex-direction: column;
+        flex: 0.4;
       }
       #colorList {
         display: flex;
@@ -22,6 +46,9 @@
         border: 1px solid #ddd;
         border-radius: 10px;
         background: #f8f8f8;
+      }
+      .dark-mode .color-group {
+        background-color: #b2b2b2;
       }
       .group-header {
         display: flex;
@@ -41,9 +68,16 @@
       .toggle-button {
         background: none;
         border: none;
-        color: blue;
+        color: gray;
         cursor: pointer;
         font-size: 14px;
+      }
+      .toggle-button:hover {
+        background: none;
+      }
+      .dark-mode .toggle-button {
+        background: none;
+        color: black;
       }
       .color-list-container {
         display: none;
@@ -54,15 +88,21 @@
       }
       .color-box-container {
         display: flex;
-        flex-direction: column;
         align-items: center;
+        justify-content: space-between;
         gap: 5px;
+        width: 100%;
+      }
+      .color-info-container {
+        display: flex;
+        align-items: center;
       }
       .color-box {
         width: 60px;
         height: 60px;
         border-radius: 8px;
         border: 1px solid #ddd;
+        margin-right: 10px;
       }
       .selected-colors-container {
         display: flex;
@@ -74,6 +114,9 @@
         border-radius: 5px;
         background-color: #f9f9f9;
       }
+      .dark-mode .selected-colors-container {
+        background-color: #b2b2b2;
+      }
       .selected-color-list-container {
         display: flex;
         align-items: center;
@@ -82,33 +125,55 @@
       .selected-color-information {
         display: flex;
         align-items: center;
+        justify-content: center;
       }
       .selected-color {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
         border-radius: 5px;
         border: 1px solid #ddd;
-        position: relative;
+        margin-right: 10px;
       }
       .remove-btn {
-        background: red;
+        background: #ef4444;
         color: white;
         border: none;
-        font-size: 14px;
         padding: 5px 10px;
-        font-size: 10px;
+        font-size: 20px;
         cursor: pointer;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .hex-text {
         font-size: 14px;
         font-weight: bold;
-        margin-left: 10px;
+        margin-bottom: 0px;
       }
       select,
       input {
         padding: 5px;
         margin-bottom: 10px;
-        width: 100%;
+        outline: none;
+      }
+      .dropdown-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #presetDropdown {
+        width: 70%;
+        margin-bottom: 0px;
+      }
+      .preset-name-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      #newPresetName {
+        width: 70%;
       }
       button {
         background-color: #007bff;
@@ -124,6 +189,32 @@
       button:hover {
         background-color: #0056b3;
       }
+      .scroll-btn {
+        position: fixed;
+        right: 10px;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+        z-index: 1000;
+        background-color: #007bff;
+        color: white;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .scroll-btn:hover {
+        background-color: #0056b3;
+      }
+
+      #scrollToTop {
+        bottom: 80px;
+        display: none;
+      }
+
+      #scrollToBottom {
+        bottom: 40px;
+      }
     </style>
   </head>
   <body>
@@ -133,24 +224,46 @@
       <button id="subscribeNow">구독하기</button>
     </div>
 
-    <h2>캡처된 이미지</h2>
-    <div id="capturedImageContainer"></div>
-    <h2>추출된 색상</h2>
-    <div id="colorList"></div>
+    <div class="top-navigator">
+      <button id="toggleDarkMode">🌙</button>
+    </div>
+
+    <div class="whole-container">
+      <div class="extract-mode-container">
+        <h2>캡처된 이미지</h2>
+        <div id="capturedImageContainer"></div>
+      </div>
+
+      <div class="extract-container">
+        <h2>추출된 색상</h2>
+        <div id="colorList"></div>
+      </div>
+    </div>
 
     <h2>선택된 색상들</h2>
     <div id="selectedColorsList" class="selected-colors-container"></div>
 
     <h2>프리셋 선택</h2>
-    <select id="presetDropdown">
-      <option value="">프리셋 선택</option>
-    </select>
+
+    <div class="dropdown-container">
+      <select id="presetDropdown">
+        <option value="">프리셋 선택</option>
+      </select>
+
+      <button id="saveSelectedColors">프리셋에 저장</button>
+    </div>
 
     <h3>새로운 프리셋 생성</h3>
-    <input type="text" id="newPresetName" placeholder="새 프리셋 이름 입력" />
 
-    <button id="saveSelectedColors">프리셋에 저장</button>
+    <div class="preset-name-container">
+      <input type="text" id="newPresetName" placeholder="새 프리셋 이름 입력" />
 
+      <button id="saveSelectedNewPresetColors">프리셋에 저장</button>
+    </div>
+
+    <!-- ✅ 맨 위로 & 맨 아래로 이동 버튼 -->
+    <button id="scrollToTop" class="scroll-btn fixed-btn">⬆</button>
+    <button id="scrollToBottom" class="scroll-btn fixed-btn">⬇</button>
     <script src="popup.js"></script>
   </body>
 </html>
