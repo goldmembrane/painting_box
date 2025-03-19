@@ -168,7 +168,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           {
             url: chrome.runtime.getURL("popup.html"),
             type: "popup",
-            width: 350,
+            width: 675,
             height: 600,
           },
           () => {
