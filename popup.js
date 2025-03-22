@@ -346,8 +346,24 @@ function updateSelectedColorsPreview() {
     removeBtn.onclick = () => {
       selectedColors.delete(color);
       delete selectedColorNames[color]; // ✅ 삭제 시 이름도 제거
+
       updateSelectedColorsPreview();
-      resetButtons();
+
+      // ✅ 그룹 내 해당 색상 버튼만 찾아서 선택 해제
+      const colorButtons = document.querySelectorAll(".color-box-container");
+      colorButtons.forEach((container) => {
+        const colorBox = container.querySelector(".color-box");
+        const button = container.querySelector("button");
+        if (!colorBox || !button) return;
+
+        const containerColor = rgbTohex(
+          getComputedStyle(colorBox).backgroundColor
+        );
+        if (containerColor.toUpperCase() === color.toUpperCase()) {
+          button.classList.remove("selected");
+          button.innerText = "선택";
+        }
+      });
     };
 
     colorInformation.appendChild(colorBox);
@@ -561,6 +577,17 @@ function rgbToHex([r, g, b]) {
   );
 }
 
+function rgbTohex(rgbString) {
+  const rgb = rgbString.match(/\d+/g).map(Number);
+  return (
+    "#" +
+    rgb
+      .map((val) => val.toString(16).padStart(2, "0"))
+      .join("")
+      .toUpperCase()
+  );
+}
+
 function multiply(vec1, vec2) {
   return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
 }
@@ -649,6 +676,8 @@ function sortColorsByLightness(hexColors) {
 
 // ✅ 색상 그룹 UI 생성
 function createColorGroup(title, colors, container) {
+  const colorButtons = [];
+
   let groupContainer = document.createElement("div");
   groupContainer.classList.add("color-group");
 
@@ -663,6 +692,28 @@ function createColorGroup(title, colors, container) {
 
   let titleElement = document.createElement("span");
   titleElement.innerText = title;
+
+  // ✅ [추가] 전체 선택 버튼
+  const selectAllBtn = document.createElement("button");
+  selectAllBtn.className = "select-all-button";
+  selectAllBtn.innerText = "전체 선택";
+
+  selectAllBtn.onclick = () => {
+    const allSelected = colorButtons.every(({ color }) =>
+      selectedColors.has(color)
+    );
+
+    colorButtons.forEach(({ color, button }) => {
+      const isSelected = selectedColors.has(color);
+      if (allSelected && isSelected) {
+        // 전체 선택된 상태 → 전체 해제
+        toggleColorSelection(color, button);
+      } else if (!allSelected && !isSelected) {
+        // 아직 선택되지 않은 경우만 선택
+        toggleColorSelection(color, button);
+      }
+    });
+  };
 
   let toggleButton = document.createElement("button");
   toggleButton.innerHTML = "▼";
@@ -685,6 +736,8 @@ function createColorGroup(title, colors, container) {
   let colorListContainer = document.createElement("div");
   colorListContainer.classList.add("color-list-container");
   colorListContainer.style.display = "none";
+
+  colorListContainer.appendChild(selectAllBtn);
 
   sortedColors.forEach((color) => {
     let colorBoxContainer = document.createElement("div");
@@ -709,7 +762,10 @@ function createColorGroup(title, colors, container) {
 
     let saveBtn = document.createElement("button");
     saveBtn.innerText = "선택";
+    saveBtn.classList.add("color-select-btn");
     saveBtn.onclick = () => toggleColorSelection(color, saveBtn);
+
+    colorButtons.push({ color, button: saveBtn });
 
     colorBoxContainer.appendChild(colorInfoContainer);
     colorBoxContainer.appendChild(saveBtn);
