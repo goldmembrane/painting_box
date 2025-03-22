@@ -43,20 +43,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (data.extractedColors && data.extractedColors.length > 0) {
-        let { grayscaleColors, colorClusters } =
-          separateGrayscaleAndGroupByCosine(data.extractedColors, 0.99); // ✅ 더 엄격한 유사도 적용
+        let { colorClusters, grayscaleColors } =
+          separateGrayscaleAndGroupByGMMImproved(data.extractedColors);
+
+        const sortedClusters = sortColorGroupsByFrequency(
+          colorClusters,
+          data.extractedColors
+        );
+
+        // ✅ 정렬된 그룹 순서대로 출력
+        sortedClusters.forEach((group, index) => {
+          group.sort(); // 그룹 내부는 오름차순
+          createColorGroup(`색상 그룹 ${index + 1}`, group, colorContainer);
+        });
 
         // ✅ 흑백 계열 색상 표시 (정렬 적용)
         if (grayscaleColors.length > 0) {
           grayscaleColors.sort(); // ✅ 오름차순 정렬
           createColorGroup("흑백 계열", grayscaleColors, colorContainer);
         }
-
-        // ✅ 컬러 그룹 표시
-        colorClusters.forEach((group, index) => {
-          group.sort(); // ✅ 그룹 내 색상 오름차순 정렬
-          createColorGroup(`색상 그룹 ${index + 1}`, group, colorContainer);
-        });
       } else {
         colorContainer.innerText = "추출된 색상 없음";
       }
@@ -354,91 +359,164 @@ function updateSelectedColorsPreview() {
   });
 }
 
-// ✅ 더욱 정밀한 흑백 계열 분리 및 코사인 유사도로 그룹화
-function separateGrayscaleAndGroupByCosine(colors, similarityThreshold = 0.98) {
-  let grayscaleColors = [];
-  let colorColors = [];
+// ✅ 색상 분리 및 GMM + Mahalanobis + BIC
+function separateGrayscaleAndGroupByGMMImproved(colors) {
+  const grayscaleColors = new Set();
+  const colorColors = [];
 
   colors.forEach((hex) => {
-    let rgb = hexToRgb(hex);
-    let hsl = rgbToHsl(rgb);
-
-    // ✅ 채도(S) ≤ 0.2이면 회색 계열도 포함하여 흑백 계열로 분류
-    if (hsl[1] <= 0.2) {
-      grayscaleColors.push(hex);
+    if (isStrictGrayscale(hex)) {
+      grayscaleColors.add(hex);
     } else {
       colorColors.push(hex);
     }
   });
 
-  // ✅ 컬러만 코사인 유사성으로 그룹화
-  let colorClusters = groupByCosineSimilarity(colorColors, similarityThreshold);
+  // ✅ 흑백 색상이 컬러 그룹에 중복되는 걸 방지
+  const colorClusters = clusterWithGMMImproved(colorColors);
 
-  return { grayscaleColors, colorClusters };
+  // ✅ 클러스터 내에서도 중복 제거
+  const filteredColorClusters = colorClusters
+    .map((cluster) => {
+      const uniqueSet = new Set(
+        cluster.filter((hex) => !grayscaleColors.has(hex))
+      );
+      return Array.from(uniqueSet);
+    })
+    .filter((cluster) => cluster.length > 0);
+
+  return {
+    colorClusters: filteredColorClusters,
+    grayscaleColors: Array.from(grayscaleColors),
+  };
 }
 
-// ✅ 코사인 유사도를 기반으로 색상 그룹화
-function groupByCosineSimilarity(colors, similarityThreshold = 0.98) {
-  let rgbColors = colors.map(hexToRgb);
-  let clusters = [];
+function isStrictGrayscale(hex) {
+  const lab = labFromRgbHex(hex);
+  const [L, a, b] = lab;
 
-  while (rgbColors.length > 0) {
-    let baseColor = rgbColors.shift();
-    let baseHex = rgbToHex(baseColor);
-    let cluster = [baseHex];
+  const lowLight = L < 20;
+  const highLight = L > 99;
+  const nearGray = Math.abs(a) < 2 && Math.abs(b) < 2;
 
-    rgbColors = rgbColors.filter((color) => {
-      let similarity = cosineSimilarity(baseColor, color);
-      if (similarity > similarityThreshold) {
-        // ✅ 유사도 0.98 이상인 색상만 같은 그룹으로
-        cluster.push(rgbToHex(color));
-        return false;
-      }
-      return true;
-    });
+  return lowLight || highLight || nearGray;
+}
 
-    clusters.push(cluster);
+function labFromRgbHex(hex) {
+  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+  const [x, y, z] = rgbToXyz(r, g, b);
+  return xyzToLab(x, y, z);
+}
+
+// ✅ 클러스터링 with BIC
+function clusterWithGMMImproved(hexColors) {
+  const data = hexColors.map((hex) => labFromRgbHex(hex));
+  let bestBIC = Infinity;
+  let bestClusters = [];
+  let bestMeans = [];
+
+  for (let k = 2; k <= Math.min(20, data.length); k++) {
+    const { clusters, means } = gmmCluster(data, k);
+    const bic = computeBIC(data, clusters, means);
+
+    if (bic < bestBIC) {
+      bestBIC = bic;
+      bestClusters = clusters;
+      bestMeans = means;
+    }
   }
 
-  return clusters.filter((cluster) => cluster.length > 0);
+  return bestClusters.map((cluster) => cluster.map((lab) => labToHex(lab)));
 }
 
-// ✅ 코사인 유사도 계산
-function cosineSimilarity(rgb1, rgb2) {
-  let dotProduct = rgb1[0] * rgb2[0] + rgb1[1] * rgb2[1] + rgb1[2] * rgb2[2];
-  let magnitude1 = Math.sqrt(rgb1[0] ** 2 + rgb1[1] ** 2 + rgb1[2] ** 2);
-  let magnitude2 = Math.sqrt(rgb2[0] ** 2 + rgb2[1] ** 2 + rgb2[2] ** 2);
-  return dotProduct / (magnitude1 * magnitude2);
+// ✅ GMM 클러스터링
+function gmmCluster(data, k) {
+  const means = [];
+  for (let i = 0; i < k; i++) {
+    means.push(data[Math.floor(Math.random() * data.length)]);
+  }
+
+  let clusters = [];
+  for (let iter = 0; iter < 10; iter++) {
+    clusters = Array.from({ length: k }, () => []);
+    data.forEach((point) => {
+      let minDist = Infinity;
+      let index = 0;
+      means.forEach((mean, i) => {
+        const d = mahalanobis(point, mean);
+        if (d < minDist) {
+          minDist = d;
+          index = i;
+        }
+      });
+      clusters[index].push(point);
+    });
+
+    means.forEach((_, i) => {
+      if (clusters[i].length > 0) {
+        means[i] = average(clusters[i]);
+      }
+    });
+  }
+
+  return { clusters, means };
 }
 
-// ✅ HEX → RGB 변환
+// ✅ Mahalanobis Distance
+function mahalanobis(x, mean) {
+  const diff = x.map((val, i) => val - mean[i]);
+  const cov = identityMatrix(x.length, 0.01); // regularized
+  const inv = inverse(cov);
+  const result = multiply(multiplyMatrixVector(inv, diff), diff);
+  return Math.sqrt(result);
+}
+
+// ✅ 평균
+function average(points) {
+  const len = points.length;
+  const sum = points[0].map((_, i) => points.reduce((acc, p) => acc + p[i], 0));
+  return sum.map((s) => s / len);
+}
+
+// ✅ BIC 계산
+function computeBIC(data, clusters, means) {
+  const n = data.length;
+  const k = clusters.length;
+  const d = data[0].length;
+
+  let logLikelihood = 0;
+  clusters.forEach((cluster, i) => {
+    const mean = means[i];
+    cluster.forEach((point) => {
+      const dist = mahalanobis(point, mean);
+      logLikelihood += -0.5 * dist ** 2;
+    });
+  });
+
+  const numParams = k * (d + 0.5 * d * (d + 1));
+  return -2 * logLikelihood + numParams * Math.log(n);
+}
+
+// ✅ 유틸 함수들
 function hexToRgb(hex) {
   hex = hex.replace(/^#/, "");
-  let bigint = parseInt(hex, 16);
+  const bigint = parseInt(hex, 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
 }
 
-// ✅ RGB → HEX 변환
-function rgbToHex(rgb) {
-  return `#${rgb.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-}
-
-// ✅ RGB → HSL 변환 (흑백 계열 판별에 사용)
 function rgbToHsl([r, g, b]) {
   r /= 255;
   g /= 255;
   b /= 255;
 
-  let max = Math.max(r, g, b);
-  let min = Math.min(r, g, b);
-  let h,
-    s,
-    l = (max + min) / 2;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
+  const l = (max + min) / 2;
 
-  if (max === min) {
-    h = s = 0; // 무채색
-  } else {
-    let d = max - min;
+  if (max !== min) {
+    const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
       case r:
@@ -457,7 +535,119 @@ function rgbToHsl([r, g, b]) {
   return [h, s, l];
 }
 
-// ✅ 색상 그룹을 생성하는 함수 (UI 업데이트)
+function labFromRgbHex(hex) {
+  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+  const [x, y, z] = rgbToXyz(r, g, b);
+  return xyzToLab(x, y, z);
+}
+
+function labToHex([l, a, b]) {
+  const [x, y, z] = labToXyz(l, a, b);
+  const [r, g, b_] = xyzToRgb(x, y, z);
+  return rgbToHex([r, g, b_]);
+}
+
+function rgbToHex([r, g, b]) {
+  return (
+    "#" +
+    [r, g, b]
+      .map((v) => {
+        const hex = Math.round(Math.min(255, Math.max(0, v)) * 255).toString(
+          16
+        );
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("")
+  );
+}
+
+function multiply(vec1, vec2) {
+  return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
+}
+
+function multiplyMatrixVector(matrix, vector) {
+  return matrix.map((row) => multiply(row, vector));
+}
+
+function identityMatrix(size, epsilon = 0) {
+  return Array.from({ length: size }, (_, i) =>
+    Array.from({ length: size }, (_, j) => (i === j ? 1 + epsilon : 0))
+  );
+}
+
+function inverse(matrix) {
+  const size = matrix.length;
+  const identity = identityMatrix(size);
+  const inv = matrix.map((row) => row.slice());
+
+  for (let i = 0; i < size; i++) {
+    let diag = inv[i][i];
+    if (diag === 0) diag = 1e-8;
+    for (let j = 0; j < size; j++) {
+      inv[i][j] = inv[i][j] / diag;
+      identity[i][j] = identity[i][j] / diag;
+    }
+    for (let k = 0; k < size; k++) {
+      if (k !== i) {
+        const factor = inv[k][i];
+        for (let j = 0; j < size; j++) {
+          inv[k][j] -= factor * inv[i][j];
+          identity[k][j] -= factor * identity[i][j];
+        }
+      }
+    }
+  }
+  return identity;
+}
+
+// ✅ XYZ & LAB 변환
+function rgbToXyz(r, g, b) {
+  [r, g, b] = [r, g, b].map((v) =>
+    v > 0.04045 ? ((v + 0.055) / 1.055) ** 2.4 : v / 12.92
+  );
+  const x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+  const z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+  return [x, y, z];
+}
+
+function xyzToLab(x, y, z) {
+  [x, y, z] = [x / 0.95047, y / 1.0, z / 1.08883].map((t) =>
+    t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116
+  );
+  const l = 116 * y - 16;
+  const a = 500 * (x - y);
+  const b = 200 * (y - z);
+  return [l, a, b];
+}
+
+function labToXyz(l, a, b) {
+  let y = (l + 16) / 116;
+  let x = a / 500 + y;
+  let z = y - b / 200;
+  [x, y, z] = [x, y, z].map((t) => {
+    const t3 = t ** 3;
+    return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
+  });
+  return [x * 0.95047, y * 1.0, z * 1.08883];
+}
+
+function xyzToRgb(x, y, z) {
+  let r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+  let g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+  let b = x * 0.0557 + y * -0.204 + z * 1.057;
+  return [r, g, b];
+}
+
+// 밝기 기준
+function sortColorsByLightness(hexColors) {
+  return hexColors
+    .map((hex) => ({ hex, l: labFromRgbHex(hex)[0] })) // L 값 추출
+    .sort((a, b) => a.l - b.l) // 밝은 → 어두운 순
+    .map((c) => c.hex);
+}
+
+// ✅ 색상 그룹 UI 생성
 function createColorGroup(title, colors, container) {
   let groupContainer = document.createElement("div");
   groupContainer.classList.add("color-group");
@@ -465,9 +655,11 @@ function createColorGroup(title, colors, container) {
   let header = document.createElement("div");
   header.classList.add("group-header");
 
+  const sortedColors = sortColorsByLightness(colors);
+
   let colorPreview = document.createElement("div");
   colorPreview.classList.add("color-preview");
-  colorPreview.style.backgroundColor = colors[0];
+  colorPreview.style.backgroundColor = sortedColors[0];
 
   let titleElement = document.createElement("span");
   titleElement.innerText = title;
@@ -494,7 +686,7 @@ function createColorGroup(title, colors, container) {
   colorListContainer.classList.add("color-list-container");
   colorListContainer.style.display = "none";
 
-  colors.forEach((color) => {
+  sortedColors.forEach((color) => {
     let colorBoxContainer = document.createElement("div");
     colorBoxContainer.classList.add("color-box-container");
 
@@ -528,6 +720,23 @@ function createColorGroup(title, colors, container) {
   container.appendChild(groupContainer);
 }
 
-// 비즈니스 로직
-// local -> 구글 계정 연동
-// 프리셋 갯수 제한: 1개 -> 20개(추후 수정 가능)
+function sortColorGroupsByFrequency(colorClusters, extractedColors) {
+  // HEX → 빈도수 매핑 생성
+  const frequencyMap = {};
+  extractedColors.forEach((hex) => {
+    frequencyMap[hex] = (frequencyMap[hex] || 0) + 1;
+  });
+
+  // 각 그룹별 총 등장 횟수 계산
+  const sorted = colorClusters
+    .map((cluster) => {
+      const totalFrequency = cluster.reduce((sum, hex) => {
+        return sum + (frequencyMap[hex] || 0);
+      }, 0);
+      return { cluster, totalFrequency };
+    })
+    .sort((a, b) => b.totalFrequency - a.totalFrequency) // 내림차순 정렬
+    .map((entry) => entry.cluster);
+
+  return sorted;
+}
