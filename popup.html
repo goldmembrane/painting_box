@@ -9,6 +9,7 @@
         padding: 10px;
         width: 600px;
       }
+
       .hidden {
         display: none;
       }
@@ -117,6 +118,20 @@
       .dark-mode .selected-colors-container {
         background-color: #b2b2b2;
       }
+
+      .select-all-button {
+        margin: 10px;
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .select-all-button:hover {
+        background-color: #0056b3;
+      }
       .selected-color-list-container {
         display: flex;
         align-items: center;
@@ -214,6 +229,18 @@
 
       #scrollToBottom {
         bottom: 40px;
+      }
+      .color-select-btn {
+        padding: 5px 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .color-select-btn.selected {
+        background-color: #28a745;
       }
     </style>
   </head>
