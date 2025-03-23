@@ -288,6 +288,15 @@
         border-radius: 5px;
       }
 
+      .dark-mode .detail-footer-button {
+        background: #444;
+        color: white;
+      }
+
+      .dark-mode .detail-footer-button:hover {
+        background: #666;
+      }
+
       .dark-mode-footer {
         background-color: #333 !important;
         color: white !important;
@@ -385,7 +394,7 @@
     </div>
 
     <div id="navBarDetail" class="navBar hidden">
-      <button id="backToMainPage">←</button>
+      <button id="backToMainPage" class="back-btn">←</button>
       <span id="presetDetailTitle">프리셋 상세</span>
       <div class="empty"></div>
     </div>
@@ -396,8 +405,12 @@
 
       <!-- ✅ 하단 버튼 컨테이너 -->
       <div class="detail-buttons" id="presetDetailFooter">
-        <button id="toggleEditMode">편집하기</button>
-        <button id="sendToCode">코드로 보내기</button>
+        <button id="toggleEditMode" class="detail-footer-button">
+          편집하기
+        </button>
+        <button id="sendToCode" class="detail-footer-button">
+          코드로 보내기
+        </button>
       </div>
     </div>
 

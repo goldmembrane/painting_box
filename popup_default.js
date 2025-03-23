@@ -75,6 +75,46 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ 다크모드 스타일 적용
     applyDarkMode();
   });
+
+  const nameOnlyInput = document.getElementById("newPresetName");
+  const nameOnlyInputSave = document.getElementById("savePreset");
+  const codeNameInput = document.getElementById("importPresetName");
+  const codeTextInput = document.getElementById("encryptedCodeInput");
+  const codeTextInputSave = document.getElementById("decodeAndSave");
+
+  function updateInputStates() {
+    if (nameOnlyInput.value.trim() !== "") {
+      codeNameInput.disabled = true;
+      codeTextInput.disabled = true;
+      codeTextInputSave.disabled = true;
+    } else if (
+      codeNameInput.value.trim() !== "" ||
+      codeTextInput.value.trim() !== ""
+    ) {
+      nameOnlyInput.disabled = true;
+      nameOnlyInputSave.disabled = true;
+    } else {
+      // 모두 비어 있으면 다시 활성화
+      nameOnlyInput.disabled = false;
+      nameOnlyInputSave.disabled = false;
+      codeNameInput.disabled = false;
+      codeTextInput.disabled = false;
+      codeTextInputSave.disabled = false;
+    }
+  }
+
+  nameOnlyInput.addEventListener("input", updateInputStates);
+  codeNameInput.addEventListener("input", updateInputStates);
+  codeTextInput.addEventListener("input", updateInputStates);
+
+  // 저장 후 모든 입력 활성화 복구
+  document.getElementById("savePreset").addEventListener("click", () => {
+    setTimeout(() => updateInputStates(), 100); // 잠시 후 상태 재확인
+  });
+
+  document.getElementById("decodeAndSave").addEventListener("click", () => {
+    setTimeout(() => updateInputStates(), 100);
+  });
 });
 
 let selectedPresetIndex = null;
@@ -328,7 +368,7 @@ function showPresetDetails(presetIndex) {
 
     document.getElementById("presetList").classList.add("hidden");
     document.getElementById("presetDetails").classList.remove("hidden");
-    document.getElementById("toggleEditMode").innerText = "이름 변경"; // ✅ 초기 버튼 상태
+    document.getElementById("toggleEditMode").innerText = "편집하기"; // ✅ 초기 버튼 상태
     isEditing = false;
   });
 }
