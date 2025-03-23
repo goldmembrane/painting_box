@@ -143,6 +143,35 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", () => {
       saveNewPreset();
     });
+
+  const presetSelect = document.getElementById("presetDropdown");
+  const presetSelectSave = document.getElementById("saveSelectedColors");
+  const presetInput = document.getElementById("newPresetName");
+  const presetInputSave = document.getElementById(
+    "saveSelectedNewPresetColors"
+  );
+
+  // ✅ Select 태그 선택 시 Input 비활성화
+  presetSelect.addEventListener("change", () => {
+    if (presetSelect.value) {
+      presetInput.disabled = true;
+      presetInputSave.disabled = true;
+    } else {
+      presetInput.disabled = false;
+      presetInputSave.disabled = false;
+    }
+  });
+
+  // ✅ Input 입력 시 Select 비활성화
+  presetInput.addEventListener("input", () => {
+    if (presetInput.value.trim() !== "") {
+      presetSelect.disabled = true;
+      presetSelectSave.disabled = true;
+    } else {
+      presetSelect.disabled = false;
+      presetSelectSave.disabled = false;
+    }
+  });
 });
 
 // ✅ 다크 모드 스타일 적용 함수
@@ -285,9 +314,24 @@ function saveNewPreset() {
       newOption.innerText = newPreset.name;
       presetDropdown.appendChild(newOption);
 
+      resetPresetFormState();
+
       alert("색상이 프리셋에 저장되었습니다!");
     });
   });
+}
+
+function resetPresetFormState() {
+  let presetSelect = document.getElementById("presetDropdown");
+  let presetSelectSave = document.getElementById("saveSelectedColors");
+  let presetInput = document.getElementById("newPresetName");
+  let presetInputSave = document.getElementById("saveSelectedNewPresetColors");
+  presetSelect.disabled = false;
+  presetSelectSave.disabled = false;
+  presetInput.disabled = false;
+  presetInputSave.disabled = false;
+  presetSelect.value = "";
+  presetInput.value = "";
 }
 
 // ✅ 색상 선택/해제 기능 (이름 입력 지원)
