@@ -382,6 +382,11 @@ function toggleEditMode() {
     // ✅ 저장 기능 실행
     savePresetColorNames();
     button.innerText = "이름 변경";
+
+    // ✅ 저장 후 input을 다시 비활성화
+    inputs.forEach((input) => {
+      input.disabled = true;
+    });
   } else {
     // ✅ 편집 모드 활성화
     inputs.forEach((input) => {
