@@ -6,8 +6,9 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        padding: 10px;
         width: 300px;
+        margin: 0;
+        padding: 0;
       }
       .hidden {
         display: none;
@@ -109,14 +110,21 @@
       }
 
       #subscriptionBanner {
+        width: 100%;
         background-color: #ffeeba;
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #ffc107;
         color: #856404;
-        text-align: center;
+        border-bottom: 1px solid #ffc107;
         font-weight: bold;
-        margin-bottom: 10px;
+        text-align: center;
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.5s ease, padding 0.5s ease;
+        box-sizing: border-box;
+      }
+
+      #subscriptionBanner.show {
+        max-height: 100px;
+        padding: 10px;
       }
 
       #subscriptionBanner button {
@@ -131,6 +139,16 @@
 
       #subscriptionBanner button:hover {
         background-color: #0056b3;
+      }
+
+      #mainContent {
+        transition: margin-top 0.5s ease;
+        margin-top: 0px;
+        padding: 10px;
+      }
+
+      #mainContent.shifted {
+        margin-top: 100px; /* 배너 높이만큼 밀어내기 */
       }
 
       #newPresetName {
@@ -347,70 +365,76 @@
       <button id="subscribeNow">구독하기</button>
     </div>
 
-    <!-- ✅ 메인 네비게이션 바 -->
-    <div id="navBarMain" class="navBar">
-      <h2>Palette Box</h2>
-      <div>
-        <button id="addPresetBtn">+</button>
-        <button id="toggleDarkMode">🌙</button>
-      </div>
-    </div>
-
-    <!-- ✅ 새 프리셋 네비게이션 바 (초기 숨김) -->
-    <div id="navBarNewPreset" class="navBar hidden">
-      <button id="backToMain" class="back-btn">←</button>
-      <h2>새 프리셋 생성</h2>
-      <div class="empty"></div>
-    </div>
-
-    <div id="presetContainer">
-      <h2>저장된 프리셋</h2>
-      <div id="presetList"></div>
-    </div>
-
-    <div id="newPresetScreen" class="hidden">
-      <!-- 🎨 프리셋 이름만 받아 생성 -->
-      <div class="section">
-        <h3>이름만 입력하여 생성</h3>
-        <input type="text" id="newPresetName" placeholder="프리셋 이름 입력" />
-        <button id="savePreset">프리셋 생성</button>
+    <div id="mainContent">
+      <!-- ✅ 메인 네비게이션 바 -->
+      <div id="navBarMain" class="navBar">
+        <h2>Palette Box</h2>
+        <div>
+          <button id="addPresetBtn">+</button>
+          <button id="toggleDarkMode">🌙</button>
+        </div>
       </div>
 
-      <!-- 🔑 암호화된 코드와 이름을 입력하여 생성 -->
-      <div class="section">
-        <h3>코드로 프리셋 가져오기</h3>
-        <input
-          type="text"
-          id="importPresetName"
-          placeholder="프리셋 이름 입력"
-        />
-        <textarea
-          id="encryptedCodeInput"
-          placeholder="암호화된 코드 입력"
-          rows="3"
-        ></textarea>
-        <button id="decodeAndSave">코드로 불러오기</button>
+      <!-- ✅ 새 프리셋 네비게이션 바 (초기 숨김) -->
+      <div id="navBarNewPreset" class="navBar hidden">
+        <button id="backToMain" class="back-btn">←</button>
+        <h2>새 프리셋 생성</h2>
+        <div class="empty"></div>
       </div>
-    </div>
 
-    <div id="navBarDetail" class="navBar hidden">
-      <button id="backToMainPage" class="back-btn">←</button>
-      <span id="presetDetailTitle">프리셋 상세</span>
-      <div class="empty"></div>
-    </div>
+      <div id="presetContainer">
+        <h2>저장된 프리셋</h2>
+        <div id="presetList"></div>
+      </div>
 
-    <div id="presetDetails" class="hidden">
-      <h2 id="presetTitle"></h2>
-      <div id="colorList"></div>
+      <div id="newPresetScreen" class="hidden">
+        <!-- 🎨 프리셋 이름만 받아 생성 -->
+        <div class="section">
+          <h3>이름만 입력하여 생성</h3>
+          <input
+            type="text"
+            id="newPresetName"
+            placeholder="프리셋 이름 입력"
+          />
+          <button id="savePreset">프리셋 생성</button>
+        </div>
 
-      <!-- ✅ 하단 버튼 컨테이너 -->
-      <div class="detail-buttons" id="presetDetailFooter">
-        <button id="toggleEditMode" class="detail-footer-button">
-          편집하기
-        </button>
-        <button id="sendToCode" class="detail-footer-button">
-          코드로 보내기
-        </button>
+        <!-- 🔑 암호화된 코드와 이름을 입력하여 생성 -->
+        <div class="section">
+          <h3>코드로 프리셋 가져오기</h3>
+          <input
+            type="text"
+            id="importPresetName"
+            placeholder="프리셋 이름 입력"
+          />
+          <textarea
+            id="encryptedCodeInput"
+            placeholder="암호화된 코드 입력"
+            rows="3"
+          ></textarea>
+          <button id="decodeAndSave">코드로 불러오기</button>
+        </div>
+      </div>
+
+      <div id="navBarDetail" class="navBar hidden">
+        <button id="backToMainPage" class="back-btn">←</button>
+        <span id="presetDetailTitle">프리셋 상세</span>
+        <div class="empty"></div>
+      </div>
+
+      <div id="presetDetails" class="hidden">
+        <h2 id="presetTitle"></h2>
+        <div id="colorList"></div>
+
+        <!-- ✅ 하단 버튼 컨테이너 -->
+        <div class="detail-buttons" id="presetDetailFooter">
+          <button id="toggleEditMode" class="detail-footer-button">
+            편집하기
+          </button>
+          <button id="sendToCode" class="detail-footer-button">
+            코드로 보내기
+          </button>
+        </div>
       </div>
     </div>
 
