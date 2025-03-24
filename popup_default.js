@@ -14,11 +14,23 @@ function checkSubscriptionStatus() {
     isSubscribed = data.isSubscribed || false;
     const subscriptionBanner = document.getElementById("subscriptionBanner");
 
-    // if (!isSubscribed) {
-    //   subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-    // } else {
-    //   subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
-    // }
+    if (!isSubscribed) {
+      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+      setTimeout(() => {
+        subscriptionBanner.classList.add("show");
+        subscriptionBanner.classListadd("shifted");
+      }, 500);
+
+      setTimeout(() => {
+        subscriptionBanner.classList.remove("show");
+        subscriptionBanner.classList.remove("shifted");
+        setTimeout(() => {
+          subscriptionBanner.classList.add("hidden");
+        }, 500);
+      }, 5000);
+    } else {
+      subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+    }
   });
 }
 
@@ -176,11 +188,19 @@ document.getElementById("savePreset").addEventListener("click", () => {
     if (!isSubscribed && presets.length >= 1) {
       const banner = document.getElementById("subscriptionBanner");
       banner.classList.remove("hidden"); // ✅ 배너 표시
+      setTimeout(() => {
+        banner.classList.add("show");
+        banner.classList.add("shifted");
+      }, 500);
 
       // ✅ 10초 후 배너 자동 숨김
       setTimeout(() => {
-        banner.classList.add("hidden");
-      }, 10000); // 10초 후 실행 (10000ms)
+        banner.classList.remove("show");
+        banner.classList.remove("shifted");
+        setTimeout(() => {
+          banner.classList.add("hidden");
+        }, 500);
+      }, 5000); // 5초 후 실행 (5000ms)
       return;
     }
 
