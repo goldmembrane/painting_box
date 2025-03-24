@@ -12,8 +12,43 @@
       }
 
       .hidden {
-        display: none;
+        display: none !important;
       }
+
+      /* ✅ 로딩 화면 스타일 */
+      #loadingScreen {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 644px;
+        height: 550px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #444;
+      }
+
+      /* ✅ 스피너 애니메이션 */
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      /* ✅ 회전 애니메이션 정의 */
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
       .top-navigator {
         display: flex;
         align-items: center;
@@ -293,7 +328,12 @@
       <button id="subscribeNow">구독하기</button>
     </div>
 
-    <div id="mainContent">
+    <div id="loadingScreen">
+      <div class="spinner"></div>
+      <h2>🎨 색 추출 중입니다...</h2>
+    </div>
+
+    <div id="mainContent" class="hidden">
       <div class="top-navigator">
         <button id="toggleDarkMode">🌙</button>
       </div>
