@@ -32,10 +32,19 @@ function checkSubscriptionStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  checkSubscriptionStatus();
+  const loadingScreen = document.getElementById("loadingScreen");
+  const mainContent = document.getElementById("mainContent");
+
+  // ✅ 처음엔 로딩 화면 표시, 본문 숨김
+  loadingScreen.classList.remove("hidden");
+  mainContent.classList.add("hidden");
+
   chrome.storage.local.get(
     ["capturedImage", "extractedColors", "colorPresets", "darkMode"],
     (data) => {
+      document.getElementById("loadingScreen").classList.add("hidden");
+      document.getElementById("mainContent").classList.remove("hidden");
+
       let imageContainer = document.getElementById("capturedImageContainer");
       let colorContainer = document.getElementById("colorList");
       let presetDropdown = document.getElementById("presetDropdown");
@@ -89,6 +98,14 @@ document.addEventListener("DOMContentLoaded", () => {
           presetDropdown.appendChild(option);
         });
       }
+
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          loadingScreen.classList.add("hidden"); // 로딩 숨김
+          mainContent.classList.remove("hidden"); // 본문 보이기
+          checkSubscriptionStatus();
+        }, 200);
+      });
     }
   );
 
