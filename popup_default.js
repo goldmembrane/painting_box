@@ -8,38 +8,93 @@ document.head.appendChild(script);
 
 let isSubscribed = false;
 
-// ✅ 구독 상태 확인 함수
-function checkSubscriptionStatus() {
-  chrome.storage.sync.get(["isSubscribed"], (data) => {
-    isSubscribed = data.isSubscribed || false;
-    const subscriptionBanner = document.getElementById("subscriptionBanner");
+// // ✅ 구독 상태 확인 함수
+// function checkSubscriptionStatus() {
+//   chrome.storage.sync.get(["isSubscribed"], (data) => {
+//     isSubscribed = data.isSubscribed || false;
+//     const subscriptionBanner = document.getElementById("subscriptionBanner");
 
-    if (!isSubscribed) {
-      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-      setTimeout(() => {
-        subscriptionBanner.classList.add("show");
-        subscriptionBanner.classListadd("shifted");
-      }, 500);
+//     if (!isSubscribed) {
+//       subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+//       setTimeout(() => {
+//         subscriptionBanner.classList.add("show");
+//         subscriptionBanner.classListadd("shifted");
+//       }, 500);
 
-      setTimeout(() => {
-        subscriptionBanner.classList.remove("show");
-        subscriptionBanner.classList.remove("shifted");
-        setTimeout(() => {
-          subscriptionBanner.classList.add("hidden");
-        }, 500);
-      }, 5000);
-    } else {
-      subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+//       setTimeout(() => {
+//         subscriptionBanner.classList.remove("show");
+//         subscriptionBanner.classList.remove("shifted");
+//         setTimeout(() => {
+//           subscriptionBanner.classList.add("hidden");
+//         }, 500);
+//       }, 5000);
+//     } else {
+//       subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+//     }
+//   });
+// }
+
+// ✅ popup_default.js에서 구독 상태 요청
+function fetchSubscriptionStatusFromBackground() {
+  chrome.runtime.sendMessage(
+    { action: "getSubscriptionStatus" },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        console.error("❌ 메시지 전송 오류:", chrome.runtime.lastError.message);
+        return;
+      }
+
+      if (response.success) {
+        const { email, isSubscribed } = response;
+
+        console.log("✅ 구글 이메일:", email);
+        console.log("✅ 구독 상태:", isSubscribed);
+
+        // ✅ 저장
+        chrome.storage.sync.set({ isSubscribed, userEmail: email });
+
+        // ✅ 구독 배너 보여주기 여부
+        const subscriptionBanner =
+          document.getElementById("subscriptionBanner");
+
+        if (!isSubscribed) {
+          subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+          setTimeout(() => {
+            subscriptionBanner.classList.add("show");
+            subscriptionBanner.classListadd("shifted");
+          }, 500);
+
+          setTimeout(() => {
+            subscriptionBanner.classList.remove("show");
+            subscriptionBanner.classList.remove("shifted");
+            setTimeout(() => {
+              subscriptionBanner.classList.add("hidden");
+            }, 500);
+          }, 5000);
+        } else {
+          subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+        }
+      } else {
+        console.warn("❌ 응답 실패:", response.error);
+      }
     }
-  });
+  );
 }
 
 // ✅ AES-256 암호화를 위한 키 (보안을 위해 저장하지 않고, 서버에서 받아오는 것이 일반적)
 const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
 
+const SECRET_KEY = "palette_box_unknown";
+
+// ✅ AES 암호화 함수
+function encryptEmail(email) {
+  const encrypted = CryptoJS.AES.encrypt(email, SECRET_KEY).toString();
+  return encodeURIComponent(encrypted);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
-  checkSubscriptionStatus();
+  fetchSubscriptionStatusFromBackground();
   document
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
@@ -623,7 +678,22 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
   });
 });
 
-// ✅ 구독 버튼 클릭 시 PayPal 구독 페이지로 이동
+// ✅ 구독 버튼 클릭 시 이벤트 처리
 document.getElementById("subscribeNow").addEventListener("click", () => {
-  window.open("https://www.paypal.com/your-subscription-page", "_blank");
+  // ✅ 구글 이메일 정보 가져오기
+  chrome.storage.sync.get(["userEmail"], (data) => {
+    const email = data.userEmail;
+    console.log(email);
+
+    if (!email) {
+      alert("구글 계정 정보가 없습니다. 로그인 상태를 확인해주세요.");
+      return;
+    }
+
+    const encryptedEmail = encryptEmail(email);
+    const subscribeUrl = `http://localhost:3002?e=${encryptedEmail}`;
+
+    // ✅ 새 탭으로 구독 페이지 열기
+    window.open(subscribeUrl, "_blank");
+  });
 });

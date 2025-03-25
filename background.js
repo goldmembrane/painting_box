@@ -186,3 +186,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // 비동기 응답을 위해 true 반환
   }
 });
+
+// ✅ popup이 이메일/구독 상태를 요청할 때 응답해주는 리스너
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "getSubscriptionStatus") {
+    getGoogleAccountEmail((email) => {
+      if (!email) {
+        sendResponse({ success: false, error: "No email" });
+        return;
+      }
+
+      checkSubscriptionStatus(email, (isSubscribed) => {
+        sendResponse({
+          success: true,
+          isSubscribed,
+          email,
+        });
+      });
+    });
+
+    return true; // 비동기 응답을 위해 true 필요
+  }
+});
