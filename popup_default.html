@@ -72,8 +72,55 @@
         background: #444;
       }
 
+      #openSettingsBtn {
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        background: transparent;
+        color: #444;
+      }
+
+      #openSettingsBtn:hover {
+        background: #bbb;
+      }
+
+      .dark-mode #openSettingsBtn {
+        color: #fff;
+      }
+
+      .dark-mode #openSettingsBtn:hover {
+        background: #444;
+      }
+
+      #subscriptionStatusContainer {
+        display: flex;
+        width: 100%;
+        margin-top: 50px;
+        align-items: center;
+        justify-content: center;
+      }
+
       .dark-mode #toggleDarkMode {
         color: white;
+      }
+      /* ✅ 다크모드 설정 화면 스타일 */
+      .dark-mode #settingsScreen {
+        background-color: #1e1e1e;
+        color: white;
+      }
+
+      .dark-mode #settingsScreen p {
+        color: #ccc;
+      }
+
+      .dark-mode #settingsScreen button {
+        background-color: #444;
+        color: white;
+        border: 1px solid #666;
+      }
+
+      .dark-mode #settingsScreen button:hover {
+        background-color: #666;
       }
 
       /* 네비게이션 바 스타일 */
@@ -371,6 +418,7 @@
         <h2>Palette Box</h2>
         <div>
           <button id="addPresetBtn">+</button>
+          <button id="openSettingsBtn">⚙</button>
           <button id="toggleDarkMode">🌙</button>
         </div>
       </div>
@@ -413,6 +461,26 @@
             rows="3"
           ></textarea>
           <button id="decodeAndSave">코드로 불러오기</button>
+        </div>
+      </div>
+
+      <!-- ⚙ 설정 화면 -->
+
+      <div id="navBarSetting" class="navBar hidden">
+        <button id="backToMainFromSettings" class="back-btn">←</button>
+        <h2>설정</h2>
+        <div class="empty"></div>
+      </div>
+
+      <div id="settingsScreen" class="hidden">
+        <p>
+          ❓ 자주 묻는 질문이 있으신가요?<br />
+          <strong>support@palettebox.io</strong>로 문의해 주세요.
+        </p>
+
+        <div id="subscriptionStatusContainer">
+          <button id="subscribeBtn" class="hidden">🔔 구독하기</button>
+          <button id="unsubscribeBtn" class="hidden">❌ 구독 취소하기</button>
         </div>
       </div>
 
