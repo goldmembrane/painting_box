@@ -8,32 +8,6 @@ document.head.appendChild(script);
 
 let isSubscribed = false;
 
-// // ✅ 구독 상태 확인 함수
-// function checkSubscriptionStatus() {
-//   chrome.storage.sync.get(["isSubscribed"], (data) => {
-//     isSubscribed = data.isSubscribed || false;
-//     const subscriptionBanner = document.getElementById("subscriptionBanner");
-
-//     if (!isSubscribed) {
-//       subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-//       setTimeout(() => {
-//         subscriptionBanner.classList.add("show");
-//         subscriptionBanner.classListadd("shifted");
-//       }, 500);
-
-//       setTimeout(() => {
-//         subscriptionBanner.classList.remove("show");
-//         subscriptionBanner.classList.remove("shifted");
-//         setTimeout(() => {
-//           subscriptionBanner.classList.add("hidden");
-//         }, 500);
-//       }, 5000);
-//     } else {
-//       subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
-//     }
-//   });
-// }
-
 // ✅ popup_default.js에서 구독 상태 요청
 function fetchSubscriptionStatusFromBackground() {
   chrome.runtime.sendMessage(
@@ -86,9 +60,16 @@ const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
 
 const SECRET_KEY = "palette_box_unknown";
 
+const SECRET_SUB_KEY = "palette_box_subscription_palette";
+
 // ✅ AES 암호화 함수
 function encryptEmail(email) {
   const encrypted = CryptoJS.AES.encrypt(email, SECRET_KEY).toString();
+  return encodeURIComponent(encrypted);
+}
+
+function encryptSubId(subId) {
+  const encrypted = CryptoJS.AES.encrypt(subId, SECRET_SUB_KEY).toString();
   return encodeURIComponent(encrypted);
 }
 
@@ -98,6 +79,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
+
+  function updateSubscriptionUI() {
+    chrome.storage.sync.get(["isSubscribed"], (data) => {
+      const isSubscribed = data.isSubscribed;
+
+      const subscribeBtn = document.getElementById("subscribeBtn");
+      const unsubscribeBtn = document.getElementById("unsubscribeBtn");
+
+      if (isSubscribed) {
+        subscribeBtn.classList.add("hidden");
+        unsubscribeBtn.classList.remove("hidden");
+      } else {
+        subscribeBtn.classList.remove("hidden");
+        unsubscribeBtn.classList.add("hidden");
+      }
+    });
+  }
+
+  document.getElementById("openSettingsBtn").addEventListener("click", () => {
+    document.getElementById("presetContainer").classList.add("hidden");
+    document.getElementById("settingsScreen").classList.remove("hidden");
+    document.getElementById("navBarMain").classList.add("hidden");
+    document.getElementById("navBarSetting").classList.remove("hidden");
+    updateSubscriptionUI();
+  });
 
   // ✅ + 버튼을 눌렀을 때 화면 및 네비게이션 변경
   document.getElementById("addPresetBtn").addEventListener("click", () => {
@@ -118,6 +124,51 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backToMainPage").addEventListener("click", () => {
     showPresetList();
   });
+
+  document
+    .getElementById("backToMainFromSettings")
+    .addEventListener("click", () => {
+      document.getElementById("settingsScreen").classList.add("hidden");
+      document.getElementById("presetContainer").classList.remove("hidden");
+      document.getElementById("navBarSetting").classList.add("hidden");
+      document.getElementById("navBarMain").classList.remove("hidden");
+    });
+
+  // 구독하기 버튼 클릭
+  document.getElementById("subscribeBtn").addEventListener("click", () => {
+    chrome.storage.sync.get(["userEmail"], (data) => {
+      const email = data.userEmail;
+      console.log(email);
+
+      if (!email) {
+        alert("구글 계정 정보가 없습니다. 로그인 상태를 확인해주세요.");
+        return;
+      }
+
+      const encryptedEmail = encryptEmail(email);
+      const subscribeUrl = `http://localhost:3002?e=${encryptedEmail}`;
+
+      // ✅ 새 탭으로 구독 페이지 열기
+      window.open(subscribeUrl, "_blank");
+    });
+  });
+
+  // 구독 취소하기 버튼 클릭
+  document
+    .getElementById("unsubscribeBtn")
+    .addEventListener("click", async () => {
+      const confirmCancel = confirm("정말 구독을 취소하시겠습니까?");
+      if (!confirmCancel) return;
+
+      chrome.storage.sync.get(["subscriptionId"], async (data) => {
+        const subId = data.subscriptionId;
+
+        const encryptSubscriptionId = encryptSubId(subId);
+        const subscribePageUrl = `http://localhost:3002?e=${encryptSubscriptionId}`;
+
+        window.open(subscribePageUrl, "_blank");
+      });
+    });
 
   chrome.storage.local.get(["darkMode"], (data) => {
     if (data.darkMode) {
@@ -209,6 +260,12 @@ function applyDarkMode() {
     document.querySelectorAll("input").forEach((input) => {
       input.classList.remove("dark-mode-input");
     });
+  }
+
+  // ✅ 설정 화면 버튼에도 다크모드 적용
+  const settingsScreen = document.getElementById("settingsScreen");
+  if (settingsScreen) {
+    settingsScreen.classList.toggle("dark-mode", isDarkMode);
   }
 }
 
