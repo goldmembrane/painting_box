@@ -1,0 +1,18 @@
+{
+  "popup_title": { "message": "カラープリセット" },
+  "app_name": { "message": "Palette Box" },
+  "saved_presets": { "message": "保存プリセット" },
+  "create_new_preset": { "message": "名前でプリセットを作成" },
+  "enter_preset_name": { "message": "プリセット名" },
+  "create_preset_button": { "message": "プリセット作成" },
+  "import_from_code": { "message": "コード輸入" },
+  "enter_encrypted_code": { "message": "エンターコード" },
+  "import_code_button": { "message": "インポートコード" },
+  "preset_detail": { "message": "プリセット詳細" },
+  "edit_names": { "message": "編集" },
+  "export_code_button": { "message": "エクスポートコード" },
+  "subscribe_prompt": {
+    "message": "🔒 より多くの機能を使用するには、サブスクリプションが必要です！"
+  },
+  "subscribe_button": { "message": "購読する" }
+}

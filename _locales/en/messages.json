@@ -1,0 +1,18 @@
+{
+  "popup_title": { "message": "Color preset" },
+  "app_name": { "message": "Palette Box" },
+  "saved_presets": { "message": "Saved presets" },
+  "create_new_preset": { "message": "Create preset from name" },
+  "enter_preset_name": { "message": "Preset name" },
+  "create_preset_button": { "message": "Create Preset" },
+  "import_from_code": { "message": "Import from code" },
+  "enter_encrypted_code": { "message": "Enter code" },
+  "import_code_button": { "message": "import code" },
+  "preset_detail": { "message": "Preset Detail" },
+  "edit_names": { "message": "Edit" },
+  "export_code_button": { "message": "export code" },
+  "subscribe_prompt": {
+    "message": "🔒 You'll need a subscription to use more features!"
+  },
+  "subscribe_button": { "message": "subscribe!" }
+}

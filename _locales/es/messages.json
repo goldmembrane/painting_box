@@ -1,0 +1,18 @@
+{
+  "popup_title": { "message": "predeterminado de color" },
+  "app_name": { "message": "Caja de paleta" },
+  "saved_presets": { "message": "predeterminado guardado" },
+  "create_new_preset": { "message": "Crear preset por nombre" },
+  "enter_preset_name": { "message": "Introduce el nombre del predeterminado" },
+  "create_preset_button": { "message": "Crear predeterminado" },
+  "import_from_code": { "message": "Importación de código" },
+  "enter_encrypted_code": { "message": "Introducción de código" },
+  "import_code_button": { "message": "Código de importación" },
+  "preset_detail": { "message": "Detalle preestablecido" },
+  "edit_names": { "message": "Editar" },
+  "export_code_button": { "message": "Código de exportación" },
+  "subscribe_prompt": {
+    "message": "🔒¡Se necesita una suscripción para usar más características!"
+  },
+  "subscribe_button": { "message": "Suscripción" }
+}

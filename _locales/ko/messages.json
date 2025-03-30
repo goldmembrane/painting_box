@@ -1,0 +1,18 @@
+{
+  "popup_title": { "message": "색상 프리셋" },
+  "app_name": { "message": "Palette Box" },
+  "saved_presets": { "message": "저장된 프리셋" },
+  "create_new_preset": { "message": "이름만 입력하여 생성" },
+  "enter_preset_name": { "message": "프리셋 이름 입력" },
+  "create_preset_button": { "message": "프리셋 생성" },
+  "import_from_code": { "message": "코드로 프리셋 가져오기" },
+  "enter_encrypted_code": { "message": "암호화된 코드 입력" },
+  "import_code_button": { "message": "코드로 불러오기" },
+  "preset_detail": { "message": "프리셋 상세" },
+  "edit_names": { "message": "이름 변경" },
+  "export_code_button": { "message": "코드로 보내기" },
+  "subscribe_prompt": {
+    "message": "🔒 더 많은 기능을 사용하려면 구독이 필요합니다!"
+  },
+  "subscribe_button": { "message": "구독하기" }
+}
