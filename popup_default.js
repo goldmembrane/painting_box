@@ -80,6 +80,67 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
 
+  document.getElementById("subscribe_prompt").textContent =
+    chrome.i18n.getMessage("subscribe_prompt");
+
+  document.getElementById("subscribeNow").textContent =
+    chrome.i18n.getMessage("subscribe_button");
+
+  document.getElementById("app_name").textContent =
+    chrome.i18n.getMessage("app_name");
+
+  document.getElementById("new_preset").textContent =
+    chrome.i18n.getMessage("new_preset");
+
+  document.getElementById("saved_presets").textContent =
+    chrome.i18n.getMessage("saved_presets");
+
+  document.getElementById("create_new_preset").textContent =
+    chrome.i18n.getMessage("create_new_preset");
+
+  document.getElementById("savePreset").textContent = chrome.i18n.getMessage(
+    "create_preset_button"
+  );
+
+  document.getElementById("import_from_code").textContent =
+    chrome.i18n.getMessage("import_from_code");
+
+  document.getElementById("importPresetName").placeholder =
+    chrome.i18n.getMessage("enter_preset_name");
+
+  document.getElementById("newPresetName").placeholder =
+    chrome.i18n.getMessage("enter_preset_name");
+
+  document.getElementById("encryptedCodeInput").placeholder =
+    chrome.i18n.getMessage("enter_encrypted_code");
+
+  document.getElementById("decodeAndSave").textContent =
+    chrome.i18n.getMessage("import_code_button");
+
+  document.getElementById("setting").textContent =
+    chrome.i18n.getMessage("setting");
+
+  document.getElementById("inqury_text").textContent =
+    chrome.i18n.getMessage("inqury_text");
+
+  document.getElementById("to_inqury_text").textContent =
+    chrome.i18n.getMessage("to_inqury_text");
+
+  document.getElementById("subscribeBtn").textContent =
+    chrome.i18n.getMessage("subscribe_button");
+
+  document.getElementById("unsubscribeBtn").textContent =
+    chrome.i18n.getMessage("cancel_subscribe_button");
+
+  document.getElementById("presetDetailTitle").textContent =
+    chrome.i18n.getMessage("preset_detail");
+
+  document.getElementById("toggleEditMode").textContent =
+    chrome.i18n.getMessage("edit_names");
+
+  document.getElementById("sendToCode").textContent =
+    chrome.i18n.getMessage("export_code_button");
+
   function updateSubscriptionUI() {
     chrome.storage.sync.get(["isSubscribed"], (data) => {
       const isSubscribed = data.isSubscribed;
@@ -417,7 +478,7 @@ function loadPresets() {
         // ✅ "코드로 보내기" 버튼 추가
         let encryptBtn = document.createElement("button");
         encryptBtn.style.marginTop = "20px";
-        encryptBtn.innerText = "코드로 보내기";
+        encryptBtn.innerText = chrome.i18n.getMessage("export_code_button");
         encryptBtn.onclick = (event) => {
           event.stopPropagation();
           encryptAndCopyToClipboard(
@@ -457,8 +518,6 @@ function showPresetDetails(presetIndex) {
 
     let colorContainer = document.createElement("div");
     colorContainer.classList.add("color-container");
-
-    console.log(Object.entries(preset.colorNames || {}));
 
     colorNameChanges = {}; // ✅ 기존 데이터 초기화 (중복 방지)
 
@@ -500,7 +559,8 @@ function showPresetDetails(presetIndex) {
 
     document.getElementById("presetList").classList.add("hidden");
     document.getElementById("presetDetails").classList.remove("hidden");
-    document.getElementById("toggleEditMode").innerText = "편집하기"; // ✅ 초기 버튼 상태
+    document.getElementById("toggleEditMode").innerText =
+      chrome.i18n.getMessage("edit"); // ✅ 초기 버튼 상태
     isEditing = false;
   });
 }
@@ -513,7 +573,7 @@ function toggleEditMode() {
   if (isEditing) {
     // ✅ 저장 기능 실행
     savePresetColorNames();
-    button.innerText = "이름 변경";
+    button.innerText = chrome.i18n.getMessage("edit_names");
 
     // ✅ 저장 후 input을 다시 비활성화
     inputs.forEach((input) => {
@@ -525,7 +585,7 @@ function toggleEditMode() {
       input.disabled = false;
       input.style.display = "inline-block"; // 입력 필드 표시
     });
-    button.innerText = "저장";
+    button.innerText = chrome.i18n.getMessage("save_names");
   }
 
   isEditing = !isEditing;
@@ -629,7 +689,7 @@ function encryptAndCopyToClipboard(
     codeContainer.style.display = "block"; // ✅ display 속성 추가
 
     // ✅ 버튼 텍스트 변경
-    toggleCodeBtn.innerText = "코드 숨기기";
+    toggleCodeBtn.innerText = chrome.i18n.getMessage("hide_code");
 
     // ✅ 클립보드에 복사
     navigator.clipboard
@@ -646,7 +706,7 @@ function encryptAndCopyToClipboard(
     codeContainer.style.display = "none";
 
     // ✅ 버튼 텍스트 변경
-    toggleCodeBtn.innerText = "코드로 보내기";
+    toggleCodeBtn.innerText = chrome.i18n.getMessage("export_code_button");
   }
 }
 
