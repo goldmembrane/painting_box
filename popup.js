@@ -35,6 +35,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingScreen = document.getElementById("loadingScreen");
   const mainContent = document.getElementById("mainContent");
 
+  document.getElementById("subscribe_prompt").textContent =
+    chrome.i18n.getMessage("subscribe_prompt");
+
+  document.getElementById("subscribeNow").textContent =
+    chrome.i18n.getMessage("subscribe_button");
+
+  document.getElementById("extracting_colors").textContent =
+    chrome.i18n.getMessage("extracting_colors");
+
+  document.getElementById("captured_image").textContent =
+    chrome.i18n.getMessage("captured_image");
+
+  document.getElementById("extracted_colors").textContent =
+    chrome.i18n.getMessage("extracted_colors");
+
+  document.getElementById("show_selected_colors").textContent =
+    chrome.i18n.getMessage("show_selected_colors");
+
+  document.getElementById("save_colors_to_preset_title").textContent =
+    chrome.i18n.getMessage("save_colors_to_preset_title");
+
+  document.getElementById("select_preset").textContent =
+    chrome.i18n.getMessage("select_preset");
+
+  document.getElementById("saveSelectedColors").textContent =
+    chrome.i18n.getMessage("save_colors_to_preset");
+
+  document.getElementById("create_new_preset_immediately").textContent =
+    chrome.i18n.getMessage("create_new_preset_immediately");
+
+  document.getElementById("newPresetName").placeholder = chrome.i18n.getMessage(
+    "enter_new_preset_name"
+  );
+
+  document.getElementById("saveSelectedNewPresetColors").textContent =
+    chrome.i18n.getMessage("save_colors_to_preset");
+
   // ✅ 처음엔 로딩 화면 표시, 본문 숨김
   loadingScreen.classList.remove("hidden");
   mainContent.classList.add("hidden");
@@ -62,7 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
         img.style.border = "1px solid #ddd";
         imageContainer.appendChild(img);
       } else {
-        imageContainer.innerText = "캡처된 이미지 없음";
+        imageContainer.innerText = chrome.i18n.getMessage("no_captured_image");
       }
 
       if (data.extractedColors && data.extractedColors.length > 0) {
@@ -86,7 +123,9 @@ document.addEventListener("DOMContentLoaded", () => {
           createColorGroup("흑백 계열", grayscaleColors, colorContainer);
         }
       } else {
-        colorContainer.innerText = "추출된 색상 없음";
+        colorContainer.innerText = chrome.i18n.getMessage(
+          "no_extracted_colors"
+        );
       }
 
       // ✅ 프리셋 목록 불러오기
@@ -384,13 +423,13 @@ function toggleColorSelection(color, button, inputField) {
     selectedColors.delete(color);
     delete selectedColorNames[(inputField && inputField.value.trim()) || color]; // ✅ 입력된 이름도 제거
     button.classList.remove("selected");
-    button.innerText = "선택";
+    button.innerText = chrome.i18n.getMessage("select_color");
   } else {
     selectedColors.add(color);
     selectedColorNames[(inputField && inputField.value.trim()) || color] =
       color; // ✅ "이름": "색상코드" 형태로 저장
     button.classList.add("selected");
-    button.innerText = "선택됨";
+    button.innerText = chrome.i18n.getMessage("selected_color");
   }
 
   updateSelectedColorsPreview();
@@ -400,7 +439,7 @@ function toggleColorSelection(color, button, inputField) {
 function resetButtons() {
   document.querySelectorAll(".color-box-container button").forEach((button) => {
     button.classList.remove("selected");
-    button.innerText = "선택";
+    button.innerText = chrome.i18n.getMessage("select_color");
   });
 }
 
@@ -449,7 +488,7 @@ function updateSelectedColorsPreview() {
         );
         if (containerColor.toUpperCase() === color.toUpperCase()) {
           button.classList.remove("selected");
-          button.innerText = "선택";
+          button.innerText = chrome.i18n.getMessage("select_color");
         }
       });
     };
@@ -784,7 +823,7 @@ function createColorGroup(title, colors, container) {
   // ✅ [추가] 전체 선택 버튼
   const selectAllBtn = document.createElement("button");
   selectAllBtn.className = "select-all-button";
-  selectAllBtn.innerText = "전체 선택";
+  selectAllBtn.innerText = chrome.i18n.getMessage("all_select_colors");
 
   selectAllBtn.onclick = () => {
     const allSelected = colorButtons.every(({ color }) =>
@@ -849,7 +888,7 @@ function createColorGroup(title, colors, container) {
     colorInfoContainer.appendChild(textBox);
 
     let saveBtn = document.createElement("button");
-    saveBtn.innerText = "선택";
+    saveBtn.innerText = chrome.i18n.getMessage("select_color");
     saveBtn.classList.add("color-select-btn");
     saveBtn.onclick = () => toggleColorSelection(color, saveBtn);
 

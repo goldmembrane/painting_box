@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Painting box",
+  "name": "__MSG_app_name__",
   "version": "1.0.0",
-  "description": "Pull out when you pick color or font familiy, save it and give to develop environment",
+  "description": "__MSG_extension_description__",
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup_default.html"
   },
+  "default_locale": "ko",
   "permissions": [
     "activeTab",
     "contextMenus",
