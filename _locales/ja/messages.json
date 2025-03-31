@@ -32,7 +32,7 @@
   "all_select_colors": { "message": "全体選択" },
   "setting": { "message": "設定" },
   "color_extracting_result": { "message": "色抽出結果" },
-  "extracting_colors": { "message": "色抽出中​​です..." },
+  "extracting_colors": { "message": "🎨 色抽出中​​です..." },
   "captured_image": { "message": "キャプチャされた画像" },
   "extracted_colors": { "message": "抽出された色" },
   "show_selected_colors": { "message": "選択した色" },

@@ -32,7 +32,7 @@
   "all_select_colors": { "message": "seleccionar todo" },
   "setting": { "message": "configuración" },
   "color_extracting_result": { "message": "Extracción de color" },
-  "extracting_colors": { "message": "Extrayendo colores..." },
+  "extracting_colors": { "message": "🎨 Extrayendo colores..." },
   "captured_image": { "message": "imagen capturada" },
   "extracted_colors": { "message": "colores extraídos" },
   "show_selected_colors": { "message": "colores seleccionados" },
