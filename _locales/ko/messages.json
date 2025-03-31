@@ -32,7 +32,7 @@
   "all_select_colors": { "message": "전체 선택" },
   "setting": { "message": "설정" },
   "color_extracting_result": { "message": "색 추출 결과" },
-  "extracting_colors": { "message": "색 추출 중입니다..." },
+  "extracting_colors": { "message": "🎨 색 추출 중입니다..." },
   "captured_image": { "message": "캡쳐된 이미지" },
   "extracted_colors": { "message": "추출된 색상들" },
   "show_selected_colors": { "message": "선택된 색상들" },

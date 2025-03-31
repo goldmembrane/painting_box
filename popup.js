@@ -32,8 +32,8 @@ function checkSubscriptionStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const loadingScreen = document.getElementById("loadingScreen");
-  const mainContent = document.getElementById("mainContent");
+  document.getElementById("extracted_colors").textContent =
+    chrome.i18n.getMessage("extracted_colors");
 
   document.getElementById("subscribe_prompt").textContent =
     chrome.i18n.getMessage("subscribe_prompt");
@@ -46,9 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("captured_image").textContent =
     chrome.i18n.getMessage("captured_image");
-
-  document.getElementById("extracted_colors").textContent =
-    chrome.i18n.getMessage("extracted_colors");
 
   document.getElementById("show_selected_colors").textContent =
     chrome.i18n.getMessage("show_selected_colors");
@@ -71,6 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("saveSelectedNewPresetColors").textContent =
     chrome.i18n.getMessage("save_colors_to_preset");
+
+  const loadingScreen = document.getElementById("loadingScreen");
+  const mainContent = document.getElementById("mainContent");
 
   // ✅ 처음엔 로딩 화면 표시, 본문 숨김
   loadingScreen.classList.remove("hidden");
