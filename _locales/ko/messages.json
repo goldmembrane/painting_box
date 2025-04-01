@@ -40,5 +40,6 @@
   "select_preset": { "message": "프리셋 선택" },
   "save_colors_to_preset": { "message": "프리셋에 저장" },
   "create_new_preset_immediately": { "message": "새로운 프리셋 생성" },
-  "enter_new_preset_name": { "message": "새 프리셋 이름 입력" }
+  "enter_new_preset_name": { "message": "새 프리셋 이름 입력" },
+  "empty_preset": { "message": "저장된 프리셋이 없습니다." }
 }

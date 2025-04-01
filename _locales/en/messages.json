@@ -40,5 +40,6 @@
   "select_preset": { "message": "Select Preset" },
   "save_colors_to_preset": { "message": "Save colors to preset" },
   "create_new_preset_immediately": { "message": "Create New Preset" },
-  "enter_new_preset_name": { "message": "Enter new preset name" }
+  "enter_new_preset_name": { "message": "Enter new preset name" },
+  "empty_preset": { "message": "There are no saved presets." }
 }

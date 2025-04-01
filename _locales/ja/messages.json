@@ -40,5 +40,6 @@
   "select_preset": { "message": "プリセット選択" },
   "save_colors_to_preset": { "message": "プリセットに保存" },
   "create_new_preset_immediately": { "message": "新しいプリセットを作成" },
-  "enter_new_preset_name": { "message": "新しいプリセット名を入力" }
+  "enter_new_preset_name": { "message": "新しいプリセット名を入力" },
+  "empty_preset": { "message": "保存されたプリセットがありません。" }
 }
