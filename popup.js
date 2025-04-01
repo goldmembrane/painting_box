@@ -32,6 +32,7 @@ function checkSubscriptionStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const lang = chrome.i18n.getUILanguage();
   document.getElementById("extracted_colors").textContent =
     chrome.i18n.getMessage("extracted_colors");
 
@@ -68,6 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("saveSelectedNewPresetColors").textContent =
     chrome.i18n.getMessage("save_colors_to_preset");
+
+  if (lang.startsWith("es")) {
+    document.getElementById("saveSelectedNewPresetColors").style.fontSize =
+      "11px";
+    document.getElementById("saveSelectedColors").style.fontSize = "11px";
+  }
 
   const loadingScreen = document.getElementById("loadingScreen");
   const mainContent = document.getElementById("mainContent");

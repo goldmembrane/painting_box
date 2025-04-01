@@ -80,8 +80,14 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
 
+  const lang = chrome.i18n.getUILanguage();
+
   document.getElementById("subscribe_prompt").textContent =
     chrome.i18n.getMessage("subscribe_prompt");
+
+  if (lang.startsWith("ja")) {
+    document.getElementById("subscribe_prompt").style.fontSize = "11px";
+  }
 
   document.getElementById("subscribeNow").textContent =
     chrome.i18n.getMessage("subscribe_button");
@@ -91,6 +97,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("new_preset").textContent =
     chrome.i18n.getMessage("new_preset");
+
+  if (lang.startsWith("ja")) {
+    document.getElementById("new_preset").style.fontSize = "17px";
+  } else if (lang.startsWith("es")) {
+    document.getElementById("new_preset").style.fontSize = "16px";
+  }
 
   document.getElementById("saved_presets").textContent =
     chrome.i18n.getMessage("saved_presets");
@@ -136,10 +148,15 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.i18n.getMessage("preset_detail");
 
   document.getElementById("toggleEditMode").textContent =
-    chrome.i18n.getMessage("edit_names");
+    chrome.i18n.getMessage("edit");
 
   document.getElementById("sendToCode").textContent =
     chrome.i18n.getMessage("export_code_button");
+
+  if (lang.startsWith("es")) {
+    document.getElementById("toggleEditMode").style.fontSize = "11px";
+    document.getElementById("sendToCode").style.fontSize = "11px";
+  }
 
   function updateSubscriptionUI() {
     chrome.storage.sync.get(["isSubscribed"], (data) => {
@@ -498,7 +515,7 @@ function loadPresets() {
         presetContainer.appendChild(presetItemContainer);
       });
     } else {
-      presetContainer.innerHTML = "<p>저장된 프리셋이 없습니다.</p>";
+      presetContainer.innerText = chrome.i18n.getMessage("empty_preset");
     }
   });
 }
@@ -573,7 +590,7 @@ function toggleEditMode() {
   if (isEditing) {
     // ✅ 저장 기능 실행
     savePresetColorNames();
-    button.innerText = chrome.i18n.getMessage("edit_names");
+    button.innerText = chrome.i18n.getMessage("edit");
 
     // ✅ 저장 후 input을 다시 비활성화
     inputs.forEach((input) => {
