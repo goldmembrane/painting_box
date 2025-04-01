@@ -55,22 +55,35 @@ function fetchSubscriptionStatusFromBackground() {
   );
 }
 
-// ✅ AES-256 암호화를 위한 키 (보안을 위해 저장하지 않고, 서버에서 받아오는 것이 일반적)
-const encryptionKey = "painted_box_1_20"; // 32바이트 키 (보안 필요)
-
-const SECRET_KEY = "palette_box_unknown";
-
-const SECRET_SUB_KEY = "palette_box_subscription_palette";
-
 // ✅ AES 암호화 함수
-function encryptEmail(email) {
-  const encrypted = CryptoJS.AES.encrypt(email, SECRET_KEY).toString();
-  return encodeURIComponent(encrypted);
+async function encryptEmail(email) {
+  try {
+    const res = await fetch("http://localhost:3000/encrypt-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    return data.encrypted;
+  } catch (err) {
+    console.error("❌ 이메일 암호화 요청 실패:", err);
+    return null;
+  }
 }
 
-function encryptSubId(subId) {
-  const encrypted = CryptoJS.AES.encrypt(subId, SECRET_SUB_KEY).toString();
-  return encodeURIComponent(encrypted);
+async function encryptSubId(subId) {
+  try {
+    const res = await fetch("http://localhost:3000/encrypt-subscription-id", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId }),
+    });
+    const data = await res.json();
+    return data.encrypted;
+  } catch (err) {
+    console.error("❌ 구독 ID 암호화 요청 실패:", err);
+    return null;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -214,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 구독하기 버튼 클릭
   document.getElementById("subscribeBtn").addEventListener("click", () => {
-    chrome.storage.sync.get(["userEmail"], (data) => {
+    chrome.storage.sync.get(["userEmail"], async (data) => {
       const email = data.userEmail;
       console.log(email);
 
@@ -223,8 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const encryptedEmail = encryptEmail(email);
-      const subscribeUrl = `http://localhost:3002?e=${encryptedEmail}`;
+      const encryptedEmail = await encryptEmail(email);
+      const subscribeUrl = `http://localhost:3002?e=${encodeURIComponent(
+        encryptedEmail
+      )}`;
 
       // ✅ 새 탭으로 구독 페이지 열기
       window.open(subscribeUrl, "_blank");
@@ -241,8 +256,10 @@ document.addEventListener("DOMContentLoaded", () => {
       chrome.storage.sync.get(["subscriptionId"], async (data) => {
         const subId = data.subscriptionId;
 
-        const encryptSubscriptionId = encryptSubId(subId);
-        const subscribePageUrl = `http://localhost:3002?e=${encryptSubscriptionId}`;
+        const encryptSubscriptionId = await encryptSubId(subId);
+        const subscribePageUrl = `http://localhost:3002?e=${encodeURIComponent(
+          encryptSubscriptionId
+        )}`;
 
         window.open(subscribePageUrl, "_blank");
       });
@@ -679,7 +696,7 @@ function deletePreset(presetId) {
 }
 
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
-function encryptColorsWithAES(preset) {
+async function encryptColorsWithAES(preset) {
   let colorData = {}; // ✅ 색상 이름 + HEX 코드 저장용 객체
 
   Object.entries(preset.colorNames || {}).forEach(([name, hex]) => {
@@ -687,20 +704,28 @@ function encryptColorsWithAES(preset) {
     colorData[colorName] = hex; // { "빨강": "#FF0000", "초록": "#00FF00" } 형식으로 저장
   });
 
-  let jsonString = JSON.stringify(colorData);
-  let encrypted = CryptoJS.AES.encrypt(jsonString, encryptionKey).toString();
-  return encrypted;
+  const response = await fetch("http://localhost:3000/encrypt-preset", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(colorData), // 평문 그대로 전송
+  });
+
+  const data = await response.json();
+
+  return data.encryptedCode;
 }
 
 // ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
-function encryptAndCopyToClipboard(
+async function encryptAndCopyToClipboard(
   preset,
   codeContainer,
   codeTextarea,
   toggleCodeBtn
 ) {
   if (codeContainer.style.display === "none") {
-    let encryptedCode = encryptColorsWithAES(preset);
+    let encryptedCode = await encryptColorsWithAES(preset);
     codeTextarea.value = encryptedCode;
     codeContainer.classList.remove("hidden"); // ✅ 코드 컨테이너 보이기
     codeContainer.style.display = "block"; // ✅ display 속성 추가
@@ -748,19 +773,22 @@ document.getElementById("sendToCode").addEventListener("click", () => {
 });
 
 // ✅ AES-256 암호화된 데이터를 복호화하는 함수
-function decryptColorsWithAES(encryptedString) {
-  try {
-    let bytes = CryptoJS.AES.decrypt(encryptedString, encryptionKey);
-    let decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    return JSON.parse(decrypted);
-  } catch (error) {
-    console.error("❌ 복호화 오류:", error);
-    return null;
-  }
+async function decryptColorsWithAES(encryptedString) {
+  const response = await fetch("http://localhost:3000/decrypt-preset", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ encryptedString }),
+  });
+
+  const data = await response.json();
+
+  return data.colorNames; // 복호화된 결과
 }
 
 // ✅ 복호화 후 프리셋으로 저장하는 함수
-document.getElementById("decodeAndSave").addEventListener("click", () => {
+document.getElementById("decodeAndSave").addEventListener("click", async () => {
   let presetName = document.getElementById("importPresetName").value.trim();
   let encryptedCode = document
     .getElementById("encryptedCodeInput")
@@ -771,7 +799,7 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
     return;
   }
 
-  let decryptedColors = decryptColorsWithAES(encryptedCode);
+  let decryptedColors = await decryptColorsWithAES(encryptedCode);
 
   if (!decryptedColors || Object.keys(decryptedColors).length === 0) {
     alert("❌ 올바른 암호화 코드가 아닙니다!");
@@ -815,7 +843,7 @@ document.getElementById("decodeAndSave").addEventListener("click", () => {
 // ✅ 구독 버튼 클릭 시 이벤트 처리
 document.getElementById("subscribeNow").addEventListener("click", () => {
   // ✅ 구글 이메일 정보 가져오기
-  chrome.storage.sync.get(["userEmail"], (data) => {
+  chrome.storage.sync.get(["userEmail"], async (data) => {
     const email = data.userEmail;
     console.log(email);
 
@@ -824,8 +852,10 @@ document.getElementById("subscribeNow").addEventListener("click", () => {
       return;
     }
 
-    const encryptedEmail = encryptEmail(email);
-    const subscribeUrl = `http://localhost:3002?e=${encryptedEmail}`;
+    const encryptedEmail = await encryptEmail(email);
+    const subscribeUrl = `http://localhost:3002?e=${encodeURIComponent(
+      encryptedEmail
+    )}`;
 
     // ✅ 새 탭으로 구독 페이지 열기
     window.open(subscribeUrl, "_blank");
