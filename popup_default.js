@@ -536,9 +536,18 @@ function loadPresets() {
           );
         };
 
+        let exportPresetBtn = document.createElement("button");
+        exportPresetBtn.style.marginTop = "10px";
+        exportPresetBtn.innerText = "프리셋 내보내기";
+        exportPresetBtn.onclick = (event) => {
+          event.stopPropagation();
+          exportPresetInPopup();
+        };
+
         presetDiv.appendChild(presetHeader);
         presetDiv.appendChild(colorStrip);
         presetDiv.appendChild(encryptBtn);
+        presetDiv.appendChild(exportPresetBtn);
         presetDiv.appendChild(codeContainer);
         presetDiv.appendChild(colorPreviewContainer);
         presetItemContainer.appendChild(presetDiv);
@@ -771,6 +780,47 @@ async function encryptColorsWithAES(preset) {
   const data = await response.json();
 
   return data.encryptedCode;
+}
+
+function exportPresetInPopup() {
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    const presets = data.colorPresets || [];
+
+    if (presets.length === 0) {
+      alert("📭 저장된 프리셋이 없습니다.");
+      return;
+    }
+
+    // ✅ 모든 프리셋의 colorNames만 평탄화하여 하나의 객체로 합침
+    const exportData = {};
+
+    presets.forEach((preset) => {
+      const colorNames = preset.colorNames || {};
+      Object.entries(colorNames).forEach(([name, hex]) => {
+        exportData[name] = hex;
+      });
+    });
+
+    const jsonString = JSON.stringify(exportData, null, 2); // 보기 좋게 포맷
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    chrome.downloads.download(
+      {
+        url: url,
+        filename: "colors.json",
+        saveAs: true, // ✅ 저장 위치 사용자 지정 가능
+      },
+      (downloadId) => {
+        if (chrome.runtime.lastError) {
+          console.error("❌ 다운로드 실패:", chrome.runtime.lastError.message);
+          alert("❌ 다운로드에 실패했습니다.");
+        } else {
+          console.log("✅ 다운로드 시작됨! ID:", downloadId);
+        }
+      }
+    );
+  });
 }
 
 // ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
