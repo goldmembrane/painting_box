@@ -212,6 +212,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("navBarMain").classList.remove("hidden");
   });
 
+  document.getElementById("addColorBtn").addEventListener("click", () => {
+    document.getElementById("presetDetails").classList.add("hidden");
+    document.getElementById("addColorScreen").classList.remove("hidden");
+  });
+
+  document.getElementById("backToDetail").addEventListener("click", () => {
+    document.getElementById("addColorScreen").classList.add("hidden");
+    document.getElementById("presetDetails").classList.remove("hidden");
+
+    document.getElementById("newColorName").value = "";
+    document.getElementById("colorPicker").value = "#000000";
+  });
+
   document.getElementById("backToMainPage").addEventListener("click", () => {
     showPresetList();
   });
@@ -682,6 +695,11 @@ function showPresetList() {
 
   document.getElementById("presetList").classList.remove("hidden");
   document.getElementById("presetDetails").classList.add("hidden");
+
+  document.getElementById("addColorScreen").classList.add("hidden");
+
+  document.getElementById("newColorName").value = "";
+  document.getElementById("colorPicker").value = "#000000";
 }
 
 // ✅ 프리셋 삭제 기능
@@ -694,6 +712,44 @@ function deletePreset(presetId) {
     });
   });
 }
+
+document.getElementById("addColorToPreset").addEventListener("click", () => {
+  const color = document.getElementById("colorPicker").value;
+  const name = document.getElementById("newColorName").value.trim();
+
+  if (!color || selectedPresetIndex === null) {
+    alert("색상이나 프리셋이 없습니다.");
+    return;
+  }
+
+  chrome.storage.local.get(["colorPresets"], (data) => {
+    let presets = data.colorPresets || [];
+    let preset = presets[selectedPresetIndex];
+
+    if (!preset.colors.includes(color)) {
+      preset.colors.push(color);
+    }
+
+    if (!preset.colorNames) {
+      preset.colorNames = {};
+    }
+
+    const colorName = name || color;
+    preset.colorNames[colorName] = color;
+
+    chrome.storage.local.set({ colorPresets: presets }, () => {
+      alert("✅ 색상이 프리셋에 추가되었습니다.");
+
+      // UI 초기화
+      document.getElementById("newColorName").value = "";
+      document.getElementById("colorPicker").value = "#000000";
+      document.getElementById("addColorScreen").classList.add("hidden");
+      document.getElementById("presetDetails").classList.remove("hidden");
+
+      showPresetDetails(selectedPresetIndex); // 프리셋 다시 렌더링
+    });
+  });
+});
 
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
 async function encryptColorsWithAES(preset) {
