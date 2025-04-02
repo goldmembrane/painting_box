@@ -16,7 +16,8 @@
     "scripting",
     "tabs",
     "storage",
-    "identity"
+    "identity",
+    "downloads"
   ],
   "oauth2": {
     "client_id": "853620929624-c5f56qp6689bt5uu8jprkqr8m1lo08pu.apps.googleusercontent.com",
