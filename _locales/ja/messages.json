@@ -41,5 +41,52 @@
   "save_colors_to_preset": { "message": "プリセットに保存" },
   "create_new_preset_immediately": { "message": "新しいプリセットを作成" },
   "enter_new_preset_name": { "message": "新しいプリセット名を入力" },
-  "empty_preset": { "message": "保存されたプリセットがありません。" }
+  "empty_preset": { "message": "保存されたプリセットがありません。" },
+  "no_google_email": {
+    "message": "Googleアカウント情報はありません。ログイン状態を確認してください。"
+  },
+  "command_entering_preset_name": {
+    "message": "プリセット名を入力してください！"
+  },
+  "already_existed_preset_name": {
+    "message": "すでに存在するプリセット名です。別の名前を入力してください。"
+  },
+  "create_preset_alert": { "message": "プリセットが作成されました！" },
+  "export_preset": { "message": "プリセットの書き出し" },
+  "enter_color_name": { "message": "色名を入力" },
+  "modify_color_name_alert": { "message": "✅ カラー名が保存されました！" },
+  "no_preset_or_colors": { "message": "色やプリセットはありません。" },
+  "add_colors_into_preset": {
+    "message": "✅ 色がプリセットに追加されました。"
+  },
+  "no_saved_preset": { "message": "📭 保存されたプリセットはありません。" },
+  "fail_download": { "message": "❌ ダウンロードに失敗しました。" },
+  "copy_encrypted_code_alert": {
+    "message": "🔒 暗号化されたコードがコピーされました！"
+  },
+  "command_entering_encrypted_code_and_preset_name": {
+    "message": "プリセット名と暗号化されたコードを入力してください！"
+  },
+  "no_correct_encrypted_code_alert": {
+    "message": "❌ 正しい暗号化コードではありません！"
+  },
+  "save_decrypted_preset_completed": {
+    "message": "復号されたプリセット保存完了"
+  },
+  "load_decrypted_preset": { "message": "プリセットがインポートされました！" },
+  "add_color_into_preset_title": { "message": "プリセットに色を追加" },
+  "back_to_detail": { "message": "戻る" },
+  "command_selecting_colors_for_save": {
+    "message": "保存する色を選択してください！"
+  },
+  "no_find_saved_preset": { "message": "選択したプリセットが見つかりません。" },
+  "select_or_enter_new_preset_name": {
+    "message": "プリセットを選択するか、新しいプリセット名を入力してください。"
+  },
+  "save_colors_into_preset_alert": {
+    "message": "色がプリセットに保存されました！"
+  },
+  "color_group": { "message": "カラーグループ" },
+  "black_and_white_series": { "message": "白黒シリーズ" },
+  "enter_color_name_optional": { "message": "カラー名(オプション)" }
 }

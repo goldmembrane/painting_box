@@ -121,13 +121,21 @@ document.addEventListener("DOMContentLoaded", () => {
         // ✅ 정렬된 그룹 순서대로 출력
         sortedClusters.forEach((group, index) => {
           group.sort(); // 그룹 내부는 오름차순
-          createColorGroup(`색상 그룹 ${index + 1}`, group, colorContainer);
+          createColorGroup(
+            `${chrome.i18n.getMessage("color_group")} ${index + 1}`,
+            group,
+            colorContainer
+          );
         });
 
         // ✅ 흑백 계열 색상 표시 (정렬 적용)
         if (grayscaleColors.length > 0) {
           grayscaleColors.sort(); // ✅ 오름차순 정렬
-          createColorGroup("흑백 계열", grayscaleColors, colorContainer);
+          createColorGroup(
+            chrome.i18n.getMessage("black_and_white_series"),
+            grayscaleColors,
+            colorContainer
+          );
         }
       } else {
         colorContainer.innerText = chrome.i18n.getMessage(
@@ -309,7 +317,7 @@ function saveNewPreset() {
   let newPresetName = document.getElementById("newPresetName").value.trim();
 
   if (selectedColors.size === 0) {
-    alert("저장할 색상을 선택하세요!");
+    alert(chrome.i18n.getMessage("command_selecting_colors_for_save"));
     return;
   }
 
@@ -335,7 +343,7 @@ function saveNewPreset() {
         (preset) => preset.id == selectedPresetId
       );
       if (!targetPreset) {
-        alert("선택한 프리셋을 찾을 수 없습니다.");
+        alert(chrome.i18n.getMessage("no_find_saved_preset"));
         return;
       }
 
@@ -351,7 +359,7 @@ function saveNewPreset() {
     } else if (newPresetName) {
       // ✅ 새 프리셋 생성 후 저장
       if (presets.some((preset) => preset.name === newPresetName)) {
-        alert("이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요.");
+        alert(chrome.i18n.getMessage("already_existed_preset_name"));
         return;
       }
 
@@ -381,7 +389,7 @@ function saveNewPreset() {
 
       presets.push(newPreset);
     } else {
-      alert("프리셋을 선택하거나 새 프리셋 이름을 입력하세요.");
+      alert(chrome.i18n.getMessage("select_or_enter_new_preset_name"));
       return;
     }
 
@@ -406,7 +414,7 @@ function saveNewPreset() {
 
       resetPresetFormState();
 
-      alert("색상이 프리셋에 저장되었습니다!");
+      alert(chrome.i18n.getMessage("save_colors_into_preset_alert"));
     });
   });
 }

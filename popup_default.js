@@ -166,9 +166,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sendToCode").textContent =
     chrome.i18n.getMessage("export_code_button");
 
+  document.getElementById("add_color_into_preset_title").textContent =
+    chrome.i18n.getMessage("add_color_into_preset_title");
+
+  document.getElementById("backToDetail").textContent =
+    chrome.i18n.getMessage("back_to_detail");
+
+  document.getElementById("addColorToPreset").textContent =
+    chrome.i18n.getMessage("save_colors_to_preset");
+
+  document.getElementById("newColorName").placeholder = chrome.i18n.getMessage(
+    "enter_color_name_optional"
+  );
+
   if (lang.startsWith("es")) {
     document.getElementById("toggleEditMode").style.fontSize = "11px";
     document.getElementById("sendToCode").style.fontSize = "11px";
+    document.getElementById("addColorToPreset").style.fontSize = "11px";
   }
 
   function updateSubscriptionUI() {
@@ -245,7 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(email);
 
       if (!email) {
-        alert("구글 계정 정보가 없습니다. 로그인 상태를 확인해주세요.");
+        alert(chrome.i18n.getMessage("no_google_email"));
         return;
       }
 
@@ -263,9 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("unsubscribeBtn")
     .addEventListener("click", async () => {
-      const confirmCancel = confirm("정말 구독을 취소하시겠습니까?");
-      if (!confirmCancel) return;
-
       chrome.storage.sync.get(["subscriptionId"], async (data) => {
         const subId = data.subscriptionId;
 
@@ -390,7 +401,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
   let presetName = document.getElementById("newPresetName").value.trim();
 
   if (!presetName) {
-    alert("프리셋 이름을 입력하세요!");
+    alert(chrome.i18n.getMessage("command_entering_preset_name"));
     return;
   }
 
@@ -400,7 +411,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
 
     // ✅ 동일한 프리셋 이름이 있는지 확인
     if (presets.some((preset) => preset.name === presetName)) {
-      alert("이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요.");
+      alert(chrome.i18n.getMessage("already_existed_preset_name"));
       return;
     }
 
@@ -441,7 +452,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
       document.getElementById("navBarNewPreset").classList.add("hidden");
       document.getElementById("navBarMain").classList.remove("hidden");
       document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
-      alert(`"${presetName}" 프리셋이 생성되었습니다!`);
+      alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
     });
   });
 });
@@ -538,7 +549,7 @@ function loadPresets() {
 
         let exportPresetBtn = document.createElement("button");
         exportPresetBtn.style.marginTop = "10px";
-        exportPresetBtn.innerText = "프리셋 내보내기";
+        exportPresetBtn.innerText = chrome.i18n.getMessage("export_preset");
         exportPresetBtn.onclick = (event) => {
           event.stopPropagation();
           exportPresetInPopup();
@@ -588,7 +599,7 @@ function showPresetDetails(presetIndex) {
       let colorNameInput = document.createElement("input");
       colorNameInput.classList.add("color-name-input");
       colorNameInput.type = "text";
-      colorNameInput.placeholder = "이름 입력";
+      colorNameInput.placeholder = chrome.i18n.getMessage("enter_color_name");
       colorNameInput.dataset.color = name;
       colorNameInput.dataset.hex = hex;
       colorNameInput.disabled = true; // 기본적으로 비활성화
@@ -691,7 +702,7 @@ function savePresetColorNames() {
       console.log(
         `✅ 프리셋 ${selectedPresetIndex}의 색상 이름이 저장되었습니다.`
       );
-      alert("✅ 색상 이름이 저장되었습니다!");
+      alert(chrome.i18n.getMessage("modify_color_name_alert"));
       colorNameChanges = {}; // ✅ 저장 후 임시 데이터 초기화
     });
   });
@@ -727,7 +738,7 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
   const name = document.getElementById("newColorName").value.trim();
 
   if (!color || selectedPresetIndex === null) {
-    alert("색상이나 프리셋이 없습니다.");
+    alert(chrome.i18n.getMessage("no_preset_or_colors"));
     return;
   }
 
@@ -747,7 +758,7 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
     preset.colorNames[colorName] = color;
 
     chrome.storage.local.set({ colorPresets: presets }, () => {
-      alert("✅ 색상이 프리셋에 추가되었습니다.");
+      alert(chrome.i18n.getMessage("add_colors_into_preset"));
 
       // UI 초기화
       document.getElementById("newColorName").value = "";
@@ -787,7 +798,7 @@ function exportPresetInPopup() {
     const presets = data.colorPresets || [];
 
     if (presets.length === 0) {
-      alert("📭 저장된 프리셋이 없습니다.");
+      alert(chrome.i18n.getMessage("no_saved_preset"));
       return;
     }
 
@@ -814,7 +825,7 @@ function exportPresetInPopup() {
       (downloadId) => {
         if (chrome.runtime.lastError) {
           console.error("❌ 다운로드 실패:", chrome.runtime.lastError.message);
-          alert("❌ 다운로드에 실패했습니다.");
+          alert(chrome.i18n.getMessage("fail_download"));
         } else {
           console.log("✅ 다운로드 시작됨! ID:", downloadId);
         }
@@ -843,7 +854,7 @@ async function encryptAndCopyToClipboard(
     navigator.clipboard
       .writeText(encryptedCode)
       .then(() => {
-        alert("🔒 암호화된 코드가 복사되었습니다!");
+        alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
       })
       .catch((err) => {
         console.error("❌ 클립보드 복사 실패:", err);
@@ -870,7 +881,7 @@ document.getElementById("sendToCode").addEventListener("click", () => {
     navigator.clipboard
       .writeText(encryptedCode)
       .then(() => {
-        alert("🔒 암호화된 코드가 복사되었습니다!");
+        alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
       })
       .catch((err) => {
         console.error("❌ 클립보드 복사 실패:", err);
@@ -901,14 +912,16 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
     .value.trim();
 
   if (!presetName || !encryptedCode) {
-    alert("프리셋 이름과 암호화된 코드를 입력하세요!");
+    alert(
+      chrome.i18n.getMessage("command_entering_encrypted_code_and_preset_name")
+    );
     return;
   }
 
   let decryptedColors = await decryptColorsWithAES(encryptedCode);
 
   if (!decryptedColors || Object.keys(decryptedColors).length === 0) {
-    alert("❌ 올바른 암호화 코드가 아닙니다!");
+    alert(chrome.i18n.getMessage("no_correct_encrypted_code_alert"));
     return;
   }
 
@@ -920,7 +933,7 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
     let presets = data.colorPresets || [];
 
     if (presets.some((preset) => preset.name === presetName)) {
-      alert("이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요.");
+      alert(chrome.i18n.getMessage("already_existed_preset_name"));
       return;
     }
 
@@ -941,7 +954,9 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
       document.getElementById("navBarMain").classList.remove("hidden");
       document.getElementById("importPresetName").value = "";
       document.getElementById("encryptedCodeInput").value = ""; // 입력 필드 초기화
-      alert(`"${presetName}" 프리셋이 가져와졌습니다!`);
+      alert(
+        `"${presetName}""${chrome.i18n.getMessage("load_decrypted_preset")}"`
+      );
     });
   });
 });
@@ -954,7 +969,7 @@ document.getElementById("subscribeNow").addEventListener("click", () => {
     console.log(email);
 
     if (!email) {
-      alert("구글 계정 정보가 없습니다. 로그인 상태를 확인해주세요.");
+      alert(chrome.i18n.getMessage("no_google_email"));
       return;
     }
 
