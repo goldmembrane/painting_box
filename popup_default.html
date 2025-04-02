@@ -156,6 +156,24 @@
         background: #444;
       }
 
+      .plus-btn {
+        font-size: 16px;
+        color: #444;
+      }
+
+      .plus-btn:hover {
+        background: #bbb;
+      }
+
+      .dark-mode .plus-btn {
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .dark-mode .plus-btn:hover {
+        background: #444;
+      }
+
       #subscriptionBanner {
         width: 100%;
         background-color: #ffeeba;
@@ -403,6 +421,22 @@
         align-items: center;
         justify-content: center;
       }
+
+      .bottom-buttons {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #addColorToPreset {
+        margin-left: 20px;
+        padding: 8px 16px;
+      }
+
+      #backToDetail {
+        padding: 8px 16px;
+      }
     </style>
   </head>
   <body>
@@ -473,10 +507,6 @@
       </div>
 
       <div id="settingsScreen" class="hidden">
-        <!-- <p>
-          ❓ __MSG_inqury_text__<br />
-          <strong>support@palettebox.io</strong><span>__MSG_to_inqury_text__</span>
-        </p> -->
         <p id="inqury_text">__MSG_inqury_text__</p>
         <strong>support@palettebox.io</strong
         ><span id="to_inqury_text">__MSG_to_inqury_text__</span>
@@ -494,7 +524,7 @@
       <div id="navBarDetail" class="navBar hidden">
         <button id="backToMainPage" class="back-btn">←</button>
         <span id="presetDetailTitle">__MSG_preset_detail__</span>
-        <div class="empty"></div>
+        <button id="addColorBtn" class="plus-btn">+</button>
       </div>
 
       <div id="presetDetails" class="hidden">
@@ -509,6 +539,29 @@
           <button id="sendToCode" class="detail-footer-button">
             __MSG_export_code_button__
           </button>
+        </div>
+      </div>
+
+      <div id="addColorScreen" class="hidden">
+        <h2 id="add-color-into-preset">색상 추가</h2>
+
+        <div style="margin-top: 20px">
+          <input type="color" id="colorPicker" />
+          <input
+            type="text"
+            id="newColorName"
+            placeholder="색상 이름 (선택사항)"
+            style="margin-left: 10px"
+          />
+
+          <div class="bottom-buttons" id="presetDetailFooter">
+            <button id="backToDetail" class="detail-footer-button">
+              돌아가기
+            </button>
+            <button id="addColorToPreset" class="detail-footer-button">
+              프리셋에 저장
+            </button>
+          </div>
         </div>
       </div>
     </div>
