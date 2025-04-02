@@ -43,5 +43,56 @@
   "enter_new_preset_name": {
     "message": "Introduzca un nuevo nombre de prisset."
   },
-  "empty_preset": { "message": "No hay prisset almacenado." }
+  "empty_preset": { "message": "No hay prisset almacenado." },
+  "no_google_email": {
+    "message": "No hay información de la cuenta de Google. Por favor verifique su estado de inicio de sesión."
+  },
+  "command_entering_preset_name": {
+    "message": "¡Ingrese el nombre del prisset!"
+  },
+  "already_existed_preset_name": {
+    "message": "El nombre prisset ya existe. Introduzca otro nombre."
+  },
+  "create_preset_alert": { "message": "¡Se ha creado un prisset!" },
+  "export_preset": { "message": "exportación prisset" },
+  "enter_color_name": { "message": "Introduzca el nombre del color" },
+  "modify_color_name_alert": {
+    "message": "✅ ¡Tu nombre de color ha sido guardado!"
+  },
+  "no_preset_or_colors": { "message": "No hay colores ni prisset." },
+  "add_colors_into_preset": {
+    "message": "✅ El color se ha añadido al prisset."
+  },
+  "no_saved_preset": { "message": "📭 No hay prisset almacenado." },
+  "fail_download": { "message": "❌ La descarga falló." },
+  "copy_encrypted_code_alert": {
+    "message": "🔒 ¡El código cifrado ha sido copiado!"
+  },
+  "command_entering_encrypted_code_and_preset_name": {
+    "message": "¡Ingrese el nombre del prisset y el código encriptado!"
+  },
+  "no_correct_encrypted_code_alert": {
+    "message": "❌ ¡Este no es un código de cifrado válido!"
+  },
+  "save_decrypted_preset_completed": {
+    "message": "Prisset decodificado almacenado."
+  },
+  "load_decrypted_preset": { "message": "¡El Prisset ha llegado!" },
+  "add_color_into_preset_title": { "message": "Añadir color al prisset" },
+  "back_to_detail": { "message": "Volver" },
+  "command_selecting_colors_for_save": {
+    "message": "¡Elige un color para guardar!"
+  },
+  "no_find_saved_preset": {
+    "message": "No se puede encontrar el prisset seleccionado."
+  },
+  "select_or_enter_new_preset_name": {
+    "message": "Seleccione un prisset o ingrese un nuevo nombre de prisset."
+  },
+  "save_colors_into_preset_alert": {
+    "message": "¡Tu color se ha guardado en tu prisset!"
+  },
+  "color_group": { "message": "grupo de color" },
+  "black_and_white_series": { "message": "serie en blanco y negro" },
+  "enter_color_name_optional": { "message": "Nombre del color (opcional)" }
 }
