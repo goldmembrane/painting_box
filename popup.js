@@ -3,11 +3,12 @@ let selectedColorNames = {};
 
 let isSubscribed = false;
 
+const subscriptionBanner = document.getElementById("subscriptionBanner");
+
 // ✅ 구독 상태 확인 함수
 function checkSubscriptionStatus() {
   chrome.storage.sync.get(["isSubscribed"], (data) => {
     isSubscribed = data.isSubscribed || false;
-    const subscriptionBanner = document.getElementById("subscriptionBanner");
 
     if (!isSubscribed) {
       subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
@@ -82,6 +83,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ 처음엔 로딩 화면 표시, 본문 숨김
   loadingScreen.classList.remove("hidden");
   mainContent.classList.add("hidden");
+
+  const closeBtn = document.getElementById("closeBanner");
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      subscriptionBanner.classList.remove("show");
+      subscriptionBanner.classList.remove("shifted");
+      setTimeout(() => {
+        subscriptionBanner.classList.add("hidden");
+      }, 500); // 애니메이션 완료 후 숨김
+    });
+  }
 
   chrome.storage.local.get(
     ["capturedImage", "extractedColors", "darkMode"],
