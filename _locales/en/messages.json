@@ -88,5 +88,6 @@
   },
   "color_group": { "message": "Color group" },
   "black_and_white_series": { "message": "Black and white series" },
-  "enter_color_name_optional": { "message": "Color name (optional)" }
+  "enter_color_name_optional": { "message": "Color name (optional)" },
+  "extract_color_mode": { "message": "Color Extraction Mode" }
 }

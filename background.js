@@ -72,7 +72,7 @@ chrome.action.onClicked.addListener(() => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "pickColor",
-    title: "색 추출 모드",
+    title: chrome.i18n.getMessage("extract_color_mode"),
     contexts: ["all"],
   });
 });
