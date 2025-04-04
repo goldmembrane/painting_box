@@ -185,6 +185,29 @@
         max-height: 0;
         transition: max-height 0.5s ease, padding 0.5s ease;
         box-sizing: border-box;
+        position: relative;
+      }
+
+      #closeBanner {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+        color: gray !important;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0;
+        background: transparent;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .dark-mode #closeBanner {
+        background: transparent;
+      }
+
+      .dark-mode #closeBanner:hover {
+        background: transparent;
       }
 
       #subscriptionBanner.show {
@@ -361,12 +384,9 @@
       /* ✅ 상세보기 화면에서 버튼 컨테이너 */
       .detail-buttons {
         position: fixed;
-        bottom: 10px;
+        bottom: 0px;
         left: 10px;
         right: 10px;
-        display: flex;
-        justify-content: space-between;
-        padding: 10px;
         background: white;
         border-radius: 5px;
       }
@@ -384,6 +404,32 @@
         background-color: #333 !important;
         color: white !important;
         box-shadow: 0 -2px 5px rgba(255, 255, 255, 0.1);
+      }
+
+      #firstDetailButtons {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+      }
+
+      #exportPresetDetail {
+        padding: 0px 10px 10px 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #exportPresetBtn {
+        padding: 8px 16px;
+      }
+
+      .dark-mode #exportPresetBtn {
+        background: #444;
+        color: white;
+      }
+
+      .dark-mode #exportPresetBtn:hover {
+        background: #666;
       }
 
       /* ✅ 버튼 스타일 */
@@ -442,6 +488,7 @@
   <body>
     <!-- ✅ 구독 배너 (초기에는 숨겨짐) -->
     <div id="subscriptionBanner" class="hidden">
+      <button id="closeBanner">&times;</button>
       <p id="subscribe_prompt">🔒 __MSG_subscribe_prompt__</p>
       <button id="subscribeNow">__MSG_subscribe_button__</button>
     </div>
@@ -531,14 +578,18 @@
         <h2 id="presetTitle"></h2>
         <div id="colorList"></div>
 
-        <!-- ✅ 하단 버튼 컨테이너 -->
         <div class="detail-buttons" id="presetDetailFooter">
-          <button id="toggleEditMode" class="detail-footer-button">
-            __MSG_edit_names__
-          </button>
-          <button id="sendToCode" class="detail-footer-button">
-            __MSG_export_code_button__
-          </button>
+          <div id="firstDetailButtons">
+            <button id="toggleEditMode" class="detail-footer-button">
+              __MSG_edit_names__
+            </button>
+            <button id="sendToCode" class="detail-footer-button">
+              __MSG_export_code_button__
+            </button>
+          </div>
+          <div id="exportPresetDetail">
+            <button id="exportPresetBtn"></button>
+          </div>
         </div>
       </div>
 
