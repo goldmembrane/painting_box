@@ -152,7 +152,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "saveExtractedColors") {
-    chrome.storage.local.set(
+    chrome.storage.sync.set(
       {
         extractedColors: message.colors,
         capturedImage: message.image,
@@ -180,7 +180,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     return true; // ✅ 비동기 응답을 사용하기 위해 `return true;` 필요
   } else if (message.action === "updatePresets") {
-    chrome.storage.local.get(["colorPresets"], (data) => {
+    chrome.storage.sync.get(["colorPresets"], (data) => {
       sendResponse({ presets: data.colorPresets });
     });
     return true; // 비동기 응답을 위해 true 반환

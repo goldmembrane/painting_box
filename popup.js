@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadingScreen.classList.remove("hidden");
   mainContent.classList.add("hidden");
 
-  chrome.storage.local.get(
+  chrome.storage.sync.get(
     ["capturedImage", "extractedColors", "colorPresets", "darkMode"],
     (data) => {
       document.getElementById("loadingScreen").classList.add("hidden");
@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : "🌙";
 
     // ✅ 다크 모드 상태 저장
-    chrome.storage.local.set({ darkMode: isDarkMode });
+    chrome.storage.sync.set({ darkMode: isDarkMode });
 
     // ✅ 다크 모드 스타일 적용
     applyDarkMode();
@@ -334,7 +334,7 @@ function saveNewPreset() {
     colorNames: invertedColorNames, // ✅ 변경된 색상 이름 포함하여 저장
   };
 
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
 
     if (selectedPresetId) {
@@ -394,7 +394,7 @@ function saveNewPreset() {
     }
 
     // ✅ 프리셋 저장 후 업데이트
-    chrome.storage.local.set({ colorPresets: presets }, () => {
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
       console.log("✅ 프리셋 저장 완료:", presets);
       selectedColors.clear();
       selectedColorNames = {}; // ✅ 저장 후 색상 이름 초기화
