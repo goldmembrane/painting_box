@@ -94,5 +94,6 @@
   },
   "color_group": { "message": "grupo de color" },
   "black_and_white_series": { "message": "serie en blanco y negro" },
-  "enter_color_name_optional": { "message": "Nombre del color (opcional)" }
+  "enter_color_name_optional": { "message": "Nombre del color (opcional)" },
+  "extract_color_mode": { "message": "Modo de extracción de colores" }
 }

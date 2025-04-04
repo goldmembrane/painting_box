@@ -88,5 +88,6 @@
   },
   "color_group": { "message": "カラーグループ" },
   "black_and_white_series": { "message": "白黒シリーズ" },
-  "enter_color_name_optional": { "message": "カラー名(オプション)" }
+  "enter_color_name_optional": { "message": "カラー名(オプション)" },
+  "extract_color_mode": { "message": "色抽出モード" }
 }

@@ -82,5 +82,6 @@
   },
   "color_group": { "message": "색상 그룹" },
   "black_and_white_series": { "message": "흑백 계열" },
-  "enter_color_name_optional": { "message": "색상 이름(선택 사항)" }
+  "enter_color_name_optional": { "message": "색상 이름(선택 사항)" },
+  "extract_color_mode": { "message": "색 추출 모드" }
 }
