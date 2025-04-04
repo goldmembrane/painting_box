@@ -83,15 +83,14 @@ document.addEventListener("DOMContentLoaded", () => {
   loadingScreen.classList.remove("hidden");
   mainContent.classList.add("hidden");
 
-  chrome.storage.sync.get(
-    ["capturedImage", "extractedColors", "colorPresets", "darkMode"],
+  chrome.storage.local.get(
+    ["capturedImage", "extractedColors", "darkMode"],
     (data) => {
       document.getElementById("loadingScreen").classList.add("hidden");
       document.getElementById("mainContent").classList.remove("hidden");
 
       let imageContainer = document.getElementById("capturedImageContainer");
       let colorContainer = document.getElementById("colorList");
-      let presetDropdown = document.getElementById("presetDropdown");
 
       if (data.darkMode) {
         document.body.classList.add("dark-mode");
@@ -143,16 +142,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
 
-      // ✅ 프리셋 목록 불러오기
-      if (data.colorPresets && data.colorPresets.length > 0) {
-        data.colorPresets.forEach((preset) => {
-          let option = document.createElement("option");
-          option.value = preset.id;
-          option.innerText = preset.name;
-          presetDropdown.appendChild(option);
-        });
-      }
-
       requestAnimationFrame(() => {
         setTimeout(() => {
           loadingScreen.classList.add("hidden"); // 로딩 숨김
@@ -162,6 +151,19 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   );
+
+  chrome.storage.sync.get(["colorPresets"], (data) => {
+    let presetDropdown = document.getElementById("presetDropdown");
+    // ✅ 프리셋 목록 불러오기
+    if (data.colorPresets && data.colorPresets.length > 0) {
+      data.colorPresets.forEach((preset) => {
+        let option = document.createElement("option");
+        option.value = preset.id;
+        option.innerText = preset.name;
+        presetDropdown.appendChild(option);
+      });
+    }
+  });
 
   // ✅ 다크 모드 버튼 클릭 이벤트 추가
   document.getElementById("toggleDarkMode").addEventListener("click", () => {
@@ -173,7 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : "🌙";
 
     // ✅ 다크 모드 상태 저장
-    chrome.storage.sync.set({ darkMode: isDarkMode });
+    chrome.storage.local.set({ darkMode: isDarkMode });
 
     // ✅ 다크 모드 스타일 적용
     applyDarkMode();

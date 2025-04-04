@@ -152,7 +152,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "saveExtractedColors") {
-    chrome.storage.sync.set(
+    chrome.storage.local.set(
       {
         extractedColors: message.colors,
         capturedImage: message.image,
