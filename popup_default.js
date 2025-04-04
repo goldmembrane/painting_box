@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-  chrome.storage.sync.get(["darkMode"], (data) => {
+  chrome.storage.local.get(["darkMode"], (data) => {
     if (data.darkMode) {
       document.body.classList.add("dark-mode");
       document.getElementById("toggleDarkMode").innerText = "☀️";
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : "🌙";
 
     // ✅ 다크모드 상태 저장
-    chrome.storage.sync.set({ darkMode: isDarkMode });
+    chrome.storage.local.set({ darkMode: isDarkMode });
 
     // ✅ 다크모드 스타일 적용
     applyDarkMode();
