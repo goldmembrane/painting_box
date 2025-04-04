@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-  chrome.storage.local.get(["darkMode"], (data) => {
+  chrome.storage.sync.get(["darkMode"], (data) => {
     if (data.darkMode) {
       document.body.classList.add("dark-mode");
       document.getElementById("toggleDarkMode").innerText = "☀️";
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
       : "🌙";
 
     // ✅ 다크모드 상태 저장
-    chrome.storage.local.set({ darkMode: isDarkMode });
+    chrome.storage.sync.set({ darkMode: isDarkMode });
 
     // ✅ 다크모드 스타일 적용
     applyDarkMode();
@@ -405,7 +405,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
     return;
   }
 
-  chrome.storage.local.get(["colorPresets", "selectedColors"], (data) => {
+  chrome.storage.sync.get(["colorPresets", "selectedColors"], (data) => {
     let presets = data.colorPresets || [];
     let selectedColors = Array.from(data.selectedColors || []);
 
@@ -442,7 +442,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
     };
 
     presets.push(newPreset);
-    chrome.storage.local.set({ colorPresets: presets }, () => {
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
       console.log("✅ 새로운 프리셋 저장 완료:", newPreset);
       loadPresets();
 
@@ -459,7 +459,7 @@ document.getElementById("savePreset").addEventListener("click", () => {
 
 // ✅ 저장된 프리셋 불러오기 및 UI 업데이트
 function loadPresets() {
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presetContainer = document.getElementById("presetList");
     presetContainer.innerHTML = "";
 
@@ -574,7 +574,7 @@ function loadPresets() {
 function showPresetDetails(presetIndex) {
   document.getElementById("navBarMain").classList.add("hidden");
   document.getElementById("navBarDetail").classList.remove("hidden");
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
     let preset = presets[presetIndex];
 
@@ -662,7 +662,7 @@ function toggleEditMode() {
 function savePresetColorNames() {
   if (selectedPresetIndex === null) return;
 
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
     let preset = presets[selectedPresetIndex];
 
@@ -698,7 +698,7 @@ function savePresetColorNames() {
     preset.colorNames = updatedColorNames;
 
     // ✅ 변경된 데이터 저장
-    chrome.storage.local.set({ colorPresets: presets }, () => {
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
       console.log(
         `✅ 프리셋 ${selectedPresetIndex}의 색상 이름이 저장되었습니다.`
       );
@@ -724,10 +724,10 @@ function showPresetList() {
 
 // ✅ 프리셋 삭제 기능
 function deletePreset(presetId) {
-  chrome.storage.local.get("colorPresets", (data) => {
+  chrome.storage.sync.get("colorPresets", (data) => {
     let presets = data.colorPresets || [];
     let updatedPresets = presets.filter((preset) => preset.id !== presetId);
-    chrome.storage.local.set({ colorPresets: updatedPresets }, () => {
+    chrome.storage.sync.set({ colorPresets: updatedPresets }, () => {
       loadPresets();
     });
   });
@@ -742,7 +742,7 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
     return;
   }
 
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
     let preset = presets[selectedPresetIndex];
 
@@ -757,7 +757,7 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
     const colorName = name || color;
     preset.colorNames[colorName] = color;
 
-    chrome.storage.local.set({ colorPresets: presets }, () => {
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
       alert(chrome.i18n.getMessage("add_colors_into_preset"));
 
       // UI 초기화
@@ -794,7 +794,7 @@ async function encryptColorsWithAES(preset) {
 }
 
 function exportPresetInPopup() {
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     const presets = data.colorPresets || [];
 
     if (presets.length === 0) {
@@ -873,7 +873,7 @@ async function encryptAndCopyToClipboard(
 document.getElementById("sendToCode").addEventListener("click", () => {
   if (selectedPresetIndex === null) return;
 
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let preset = data.colorPresets[selectedPresetIndex];
     let encryptedCode = encryptColorsWithAES(preset);
 
@@ -929,7 +929,7 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
   let colorsArray = Object.values(decryptedColors);
   let colorNamesObject = decryptedColors; // `{ "이름": "HEX 코드" }` 구조 유지
 
-  chrome.storage.local.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
 
     if (presets.some((preset) => preset.name === presetName)) {
@@ -945,7 +945,7 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
     };
 
     presets.push(newPreset);
-    chrome.storage.local.set({ colorPresets: presets }, () => {
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
       console.log(`✅ 복호화된 프리셋 "${presetName}" 저장 완료:`, newPreset);
       loadPresets();
       document.getElementById("newPresetScreen").classList.add("hidden");
