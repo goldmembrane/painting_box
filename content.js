@@ -3,18 +3,6 @@ window.startColorSelection = function () {
   let startX, startY;
   let selectionBox = null;
 
-  // // ✅ 기존 마우스 이벤트 방지
-  // document.body.style.pointerEvents = "none";
-  // document.addEventListener("mousedown", onMouseDown, true);
-  // document.addEventListener("mousemove", onMouseMove, true);
-  // document.addEventListener("mouseup", onMouseUp, true);
-  // document.addEventListener("click", preventDefault, true);
-  // document.addEventListener("contextmenu", preventDefault, true);
-  // document.addEventListener("wheel", preventDefault, { passive: false });
-
-  // // ✅ 커서 스타일 변경
-  // document.body.style.cursor = "crosshair";
-
   // ✅ 전체 화면 덮는 오버레이 생성
   const overlay = document.createElement("div");
   overlay.style.position = "fixed";
