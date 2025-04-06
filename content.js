@@ -3,17 +3,33 @@ window.startColorSelection = function () {
   let startX, startY;
   let selectionBox = null;
 
-  // ✅ 기존 마우스 이벤트 방지
-  document.body.style.pointerEvents = "none";
-  document.addEventListener("mousedown", onMouseDown, true);
-  document.addEventListener("mousemove", onMouseMove, true);
-  document.addEventListener("mouseup", onMouseUp, true);
-  document.addEventListener("click", preventDefault, true);
-  document.addEventListener("contextmenu", preventDefault, true);
-  document.addEventListener("wheel", preventDefault, { passive: false });
+  // // ✅ 기존 마우스 이벤트 방지
+  // document.body.style.pointerEvents = "none";
+  // document.addEventListener("mousedown", onMouseDown, true);
+  // document.addEventListener("mousemove", onMouseMove, true);
+  // document.addEventListener("mouseup", onMouseUp, true);
+  // document.addEventListener("click", preventDefault, true);
+  // document.addEventListener("contextmenu", preventDefault, true);
+  // document.addEventListener("wheel", preventDefault, { passive: false });
 
-  // ✅ 커서 스타일 변경
-  document.body.style.cursor = "crosshair";
+  // // ✅ 커서 스타일 변경
+  // document.body.style.cursor = "crosshair";
+
+  // ✅ 전체 화면 덮는 오버레이 생성
+  const overlay = document.createElement("div");
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100%";
+  overlay.style.height = "100%";
+  overlay.style.cursor = "crosshair"; // ✅ 커서 지정
+  overlay.style.zIndex = "9998";
+  overlay.style.backgroundColor = "rgba(0,0,0,0)"; // 완전 투명
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener("mousedown", onMouseDown, true);
+  overlay.addEventListener("mousemove", onMouseMove, true);
+  overlay.addEventListener("mouseup", onMouseUp, true);
 
   function onMouseDown(event) {
     if (!isDragging) return;
@@ -27,6 +43,8 @@ window.startColorSelection = function () {
       selectionBox = document.createElement("div");
       selectionBox.style.position = "absolute";
       selectionBox.style.pointerEvents = "none"; // ✅ 선택 영역 내에서도 이벤트 차단
+      selectionBox.style.border = "1px dashed gray";
+      selectionBox.style.zIndex = "9999";
       document.body.appendChild(selectionBox);
     }
 
@@ -73,6 +91,10 @@ window.startColorSelection = function () {
     if (selectionBox) {
       selectionBox.remove();
       selectionBox = null;
+    }
+
+    if (overlay) {
+      overlay.remove();
     }
   }
 
