@@ -35,7 +35,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup.html"],
+      "resources": ["popup.html", "config.json"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -1,5 +1,3 @@
-import CONFIG from "./config.js";
-
 // ✅ crypto-js를 동적으로 불러오기 (Manifest V3 호환)
 const script = document.createElement("script");
 script.src = chrome.runtime.getURL("libs/crypto-js.min.js"); // 로컬에서 로드
@@ -59,7 +57,7 @@ function fetchSubscriptionStatusFromBackground() {
 // ✅ AES 암호화 함수
 async function encryptEmail(email) {
   try {
-    const res = await fetch(`${CONFIG.PALETTE_BOX_BACKEND_URL}/encrypt-email`, {
+    const res = await fetch(`https://palettebox.net/encrypt-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
@@ -74,14 +72,11 @@ async function encryptEmail(email) {
 
 async function encryptSubId(subId) {
   try {
-    const res = await fetch(
-      `${CONFIG.PALETTE_BOX_BACKEND_URL}/encrypt-subscription-id`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subId }),
-      }
-    );
+    const res = await fetch(`https://palettebox.net/encrypt-subscription-id`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subId }),
+    });
     const data = await res.json();
     return data.encrypted;
   } catch (err) {
@@ -851,16 +846,13 @@ async function encryptColorsWithAES(preset) {
     colorData[colorName] = hex; // { "빨강": "#FF0000", "초록": "#00FF00" } 형식으로 저장
   });
 
-  const response = await fetch(
-    `${CONFIG.PALETTE_BOX_BACKEND_URL}/encrypt-preset`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(colorData), // 평문 그대로 전송
-    }
-  );
+  const response = await fetch(`https://palettebox.net/encrypt-preset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(colorData), // 평문 그대로 전송
+  });
 
   const data = await response.json();
 
@@ -981,16 +973,13 @@ document.getElementById("sendToCode").addEventListener("click", () => {
 
 // ✅ AES-256 암호화된 데이터를 복호화하는 함수
 async function decryptColorsWithAES(encryptedString) {
-  const response = await fetch(
-    `${CONFIG.PALETTE_BOX_BACKEND_URL}/decrypt-preset`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ encryptedString }),
-    }
-  );
+  const response = await fetch(`https://palettebox.net/decrypt-preset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ encryptedString }),
+  });
 
   const data = await response.json();
 

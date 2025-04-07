@@ -1,5 +1,3 @@
-import CONFIG from "./config.js";
-
 // ✅ Google OAuth2 인증을 사용하여 이메일 가져오기
 function getGoogleAccountEmail(callback) {
   chrome.identity.getAuthToken({ interactive: true }, (token) => {
@@ -30,7 +28,7 @@ function getGoogleAccountEmail(callback) {
 }
 // ✅ 백엔드 서버에 구독 상태 확인 요청
 function checkSubscriptionStatus(email, callback) {
-  fetch(`${CONFIG.PALETTE_BOX_BACKEND_URL}/subscription-status/${email}`)
+  fetch(`https://palettebox.net/subscription-status/${email}`)
     .then((res) => res.json())
     .then((data) => {
       let isSubscribed = data.isSubscribed || false;
