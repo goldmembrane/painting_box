@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const encryptedEmail = await encryptEmail(email);
-      const subscribeUrl = `http://localhost:3002?e=${encodeURIComponent(
+      const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
         encryptedEmail
       )}`;
 
@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const subId = data.subscriptionId;
 
         const encryptSubscriptionId = await encryptSubId(subId);
-        const subscribePageUrl = `http://localhost:3002?e=${encodeURIComponent(
+        const subscribePageUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
           encryptSubscriptionId
         )}`;
 
@@ -1048,7 +1048,6 @@ document.getElementById("subscribeNow").addEventListener("click", () => {
   // ✅ 구글 이메일 정보 가져오기
   chrome.storage.sync.get(["userEmail"], async (data) => {
     const email = data.userEmail;
-    console.log(email);
 
     if (!email) {
       alert(chrome.i18n.getMessage("no_google_email"));
@@ -1056,9 +1055,11 @@ document.getElementById("subscribeNow").addEventListener("click", () => {
     }
 
     const encryptedEmail = await encryptEmail(email);
-    const subscribeUrl = `http://localhost:3002?e=${encodeURIComponent(
+    const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
       encryptedEmail
     )}`;
+
+    console.log(subscribeUrl);
 
     // ✅ 새 탭으로 구독 페이지 열기
     window.open(subscribeUrl, "_blank");
