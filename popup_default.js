@@ -31,7 +31,7 @@ function fetchSubscriptionStatusFromBackground() {
           subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
           setTimeout(() => {
             subscriptionBanner.classList.add("show");
-            subscriptionBanner.classListadd("shifted");
+            subscriptionBanner.classList.add("shifted");
           }, 500);
 
           setTimeout(() => {
@@ -534,7 +534,7 @@ function loadPresets() {
         codeTextarea.readOnly = true;
         codeTextarea.style.resize = "none";
         codeTextarea.style.height = "80px";
-        codeTextarea.style.width = "270px";
+        codeTextarea.style.width = "250px";
         codeTextarea.addEventListener("click", (event) => {
           event.stopPropagation();
         });
@@ -551,7 +551,7 @@ function loadPresets() {
             subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
             setTimeout(() => {
               subscriptionBanner.classList.add("show");
-              subscriptionBanner.classListadd("shifted");
+              subscriptionBanner.classList.add("shifted");
             }, 500);
 
             setTimeout(() => {
