@@ -410,7 +410,6 @@ function saveNewPreset() {
 
     // ✅ 프리셋 저장 후 업데이트
     chrome.storage.sync.set({ colorPresets: presets }, () => {
-      console.log("✅ 프리셋 저장 완료:", presets);
       selectedColors.clear();
       selectedColorNames = {}; // ✅ 저장 후 색상 이름 초기화
       updateSelectedColorsPreview();

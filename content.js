@@ -64,8 +64,6 @@ window.startColorSelection = function () {
     let endX = event.clientX;
     let endY = event.clientY;
 
-    console.log(`🎯 선택된 영역: (${startX}, ${startY}) → (${endX}, ${endY})`);
-
     // ✅ 마우스 이벤트 원상 복구
     stopSelectionMode();
 

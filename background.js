@@ -44,7 +44,6 @@ function checkSubscriptionStatus(email, callback) {
       );
     })
     .catch((error) => {
-      console.error("❌ 구독 상태 확인 오류:", error);
       callback(false);
     });
 }
@@ -112,8 +111,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let activeTabId = tabs[0].id;
 
         chrome.tabs.captureVisibleTab(null, { format: "png" }, (imageSrc) => {
-          console.log("📢 [DEBUG] 캡처된 이미지 데이터:", imageSrc);
-
           if (chrome.runtime.lastError || !imageSrc) {
             console.error(
               "❌ [ERROR] 화면 캡처 실패:",
@@ -159,10 +156,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         popupMode: "colorPicker",
       },
       () => {
-        console.log("✅ 색상 데이터 저장 완료");
-
-        console.log("색상 데이터: ", message.colors);
-
         // ✅ 저장이 완료된 후 popup.html 실행
         chrome.windows.create(
           {
