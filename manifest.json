@@ -1,13 +1,52 @@
 {
   "manifest_version": 3,
-  "name": "Painting box",
+  "name": "__MSG_app_name__",
   "version": "1.0.0",
-  "description": "Pull out when you pick color or font familiy, save it and give to develop environment",
+  "description": "__MSG_extension_description__",
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup_default.html",
+    "default_icon": {
+      "16": "icons/Palette-box-logo-16.png",
+      "48": "icons/Palette-box-logo-48.png",
+      "128": "icons/Palette-box-logo-128.png"
+    }
   },
-  "icon": {}
+  "icons": {
+    "16": "icons/Palette-box-logo-16.png",
+    "48": "icons/Palette-box-logo-48.png",
+    "128": "icons/Palette-box-logo-128.png"
+  },
+  "default_locale": "ko",
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "tabs",
+    "storage",
+    "identity",
+    "downloads"
+  ],
+  "oauth2": {
+    "client_id": "853620929624-c5f56qp6689bt5uu8jprkqr8m1lo08pu.apps.googleusercontent.com",
+    "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
+  },
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html", "config.json"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

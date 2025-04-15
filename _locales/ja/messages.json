@@ -1,0 +1,93 @@
+{
+  "popup_title": { "message": "カラープリセット" },
+  "app_name": { "message": "Palette Box" },
+  "extension_description": {
+    "message": "色を抽出してプリセットに保存し、保存したプリセットを開発環境に渡してください。"
+  },
+  "saved_presets": { "message": "保存されたプリセット" },
+  "create_new_preset": { "message": "名前のみを入力して作成" },
+  "enter_preset_name": { "message": "プリセット名を入力" },
+  "create_preset_button": { "message": "プリセット作成" },
+  "import_from_code": { "message": "コードにプリセットをインポートする" },
+  "enter_encrypted_code": { "message": "暗号化されたコードを入力" },
+  "import_code_button": { "message": "コードに読み込む" },
+  "preset_detail": { "message": "プリセット詳細" },
+  "edit": { "message": "編集" },
+  "edit_names": { "message": "名前変更" },
+  "save_names": { "message": "保存" },
+  "export_code_button": { "message": "コードに送信" },
+  "hide_code": { "message": "コードを隠す" },
+  "subscribe_prompt": {
+    "message": "🔒 より多くの機能を使用するには購読が必要です！"
+  },
+  "subscribe_button": { "message": "購読する" },
+  "cancel_subscribe_button": { "message": "購読をキャンセルする" },
+  "new_preset": { "message": "新しいプリセットを作成" },
+  "inqury_text": { "message": "よくある質問がありますか？" },
+  "to_inqury_text": { "message": "でお問い合わせください。" },
+  "no_captured_image": { "message": "撮影した画像はありません" },
+  "no_extracted_colors": { "message": "抽出された色なし" },
+  "select_color": { "message": "選択" },
+  "selected_color": { "message": "選択された" },
+  "all_select_colors": { "message": "全体選択" },
+  "setting": { "message": "設定" },
+  "color_extracting_result": { "message": "色抽出結果" },
+  "extracting_colors": { "message": "🎨 色抽出中​​です..." },
+  "captured_image": { "message": "キャプチャされた画像" },
+  "extracted_colors": { "message": "抽出された色" },
+  "show_selected_colors": { "message": "選択した色" },
+  "save_colors_to_preset_title": { "message": "プリセットを保存" },
+  "select_preset": { "message": "プリセット選択" },
+  "save_colors_to_preset": { "message": "プリセットに保存" },
+  "create_new_preset_immediately": { "message": "新しいプリセットを作成" },
+  "enter_new_preset_name": { "message": "新しいプリセット名を入力" },
+  "empty_preset": { "message": "保存されたプリセットがありません。" },
+  "no_google_email": {
+    "message": "Googleアカウント情報はありません。ログイン状態を確認してください。"
+  },
+  "command_entering_preset_name": {
+    "message": "プリセット名を入力してください！"
+  },
+  "already_existed_preset_name": {
+    "message": "すでに存在するプリセット名です。別の名前を入力してください。"
+  },
+  "create_preset_alert": { "message": "プリセットが作成されました！" },
+  "export_preset": { "message": "プリセットの書き出し" },
+  "enter_color_name": { "message": "色名を入力" },
+  "modify_color_name_alert": { "message": "✅ カラー名が保存されました！" },
+  "no_preset_or_colors": { "message": "色やプリセットはありません。" },
+  "add_colors_into_preset": {
+    "message": "✅ 色がプリセットに追加されました。"
+  },
+  "no_saved_preset": { "message": "📭 保存されたプリセットはありません。" },
+  "fail_download": { "message": "❌ ダウンロードに失敗しました。" },
+  "copy_encrypted_code_alert": {
+    "message": "🔒 暗号化されたコードがコピーされました！"
+  },
+  "command_entering_encrypted_code_and_preset_name": {
+    "message": "プリセット名と暗号化されたコードを入力してください！"
+  },
+  "no_correct_encrypted_code_alert": {
+    "message": "❌ 正しい暗号化コードではありません！"
+  },
+  "save_decrypted_preset_completed": {
+    "message": "復号されたプリセット保存完了"
+  },
+  "load_decrypted_preset": { "message": "プリセットがインポートされました！" },
+  "add_color_into_preset_title": { "message": "プリセットに色を追加" },
+  "back_to_detail": { "message": "戻る" },
+  "command_selecting_colors_for_save": {
+    "message": "保存する色を選択してください！"
+  },
+  "no_find_saved_preset": { "message": "選択したプリセットが見つかりません。" },
+  "select_or_enter_new_preset_name": {
+    "message": "プリセットを選択するか、新しいプリセット名を入力してください。"
+  },
+  "save_colors_into_preset_alert": {
+    "message": "色がプリセットに保存されました！"
+  },
+  "color_group": { "message": "カラーグループ" },
+  "black_and_white_series": { "message": "白黒シリーズ" },
+  "enter_color_name_optional": { "message": "カラー名(オプション)" },
+  "extract_color_mode": { "message": "色抽出モード" }
+}

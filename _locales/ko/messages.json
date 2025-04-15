@@ -1,0 +1,87 @@
+{
+  "popup_title": { "message": "색상 프리셋" },
+  "app_name": { "message": "Palette Box" },
+  "extension_description": {
+    "message": "색상을 추출해서 프리셋에 저장하고, 저장한 프리셋을 개발환경에 전달하세요."
+  },
+  "saved_presets": { "message": "저장된 프리셋" },
+  "create_new_preset": { "message": "이름만 입력하여 생성" },
+  "enter_preset_name": { "message": "프리셋 이름 입력" },
+  "create_preset_button": { "message": "프리셋 생성" },
+  "import_from_code": { "message": "코드로 프리셋 가져오기" },
+  "enter_encrypted_code": { "message": "암호화된 코드 입력" },
+  "import_code_button": { "message": "코드로 불러오기" },
+  "preset_detail": { "message": "프리셋 상세" },
+  "edit": { "message": "편집하기" },
+  "edit_names": { "message": "이름 변경" },
+  "save_names": { "message": "저장" },
+  "export_code_button": { "message": "코드로 보내기" },
+  "hide_code": { "message": "코드 숨기기" },
+  "subscribe_prompt": {
+    "message": "🔒 더 많은 기능을 사용하려면 구독이 필요합니다!"
+  },
+  "subscribe_button": { "message": "구독하기" },
+  "cancel_subscribe_button": { "message": "구독 취소하기" },
+  "new_preset": { "message": "새 프리셋 생성" },
+  "inqury_text": { "message": "자주 묻는 질문이 있으신가요?" },
+  "to_inqury_text": { "message": "로 문의해 주세요." },
+  "no_captured_image": { "message": "캡쳐된 이미지 없음" },
+  "no_extracted_colors": { "message": "추출된 색상 없음" },
+  "select_color": { "message": "선택" },
+  "selected_color": { "message": "선택됨" },
+  "all_select_colors": { "message": "전체 선택" },
+  "setting": { "message": "설정" },
+  "color_extracting_result": { "message": "색 추출 결과" },
+  "extracting_colors": { "message": "🎨 색 추출 중입니다..." },
+  "captured_image": { "message": "캡쳐된 이미지" },
+  "extracted_colors": { "message": "추출된 색상들" },
+  "show_selected_colors": { "message": "선택된 색상들" },
+  "save_colors_to_preset_title": { "message": "프리셋 저장하기" },
+  "select_preset": { "message": "프리셋 선택" },
+  "save_colors_to_preset": { "message": "프리셋에 저장" },
+  "create_new_preset_immediately": { "message": "새로운 프리셋 생성" },
+  "enter_new_preset_name": { "message": "새 프리셋 이름 입력" },
+  "empty_preset": { "message": "저장된 프리셋이 없습니다." },
+  "no_google_email": {
+    "message": "구글 계정 정보가 없습니다. 로그인 상태를 확인해주세요."
+  },
+  "command_entering_preset_name": { "message": "프리셋 이름을 입력하세요!" },
+  "already_existed_preset_name": {
+    "message": "이미 존재하는 프리셋 이름입니다. 다른 이름을 입력하세요."
+  },
+  "create_preset_alert": { "message": "프리셋이 생성되었습니다!" },
+  "export_preset": { "message": "프리셋 내보내기" },
+  "enter_color_name": { "message": "색상 이름 입력" },
+  "modify_color_name_alert": { "message": "✅ 색상 이름이 저장되었습니다!" },
+  "no_preset_or_colors": { "message": "색상이나 프리셋이 없습니다." },
+  "add_colors_into_preset": { "message": "✅ 색상이 프리셋에 추가되었습니다." },
+  "no_saved_preset": { "message": "📭 저장된 프리셋이 없습니다." },
+  "fail_download": { "message": "❌ 다운로드에 실패했습니다." },
+  "copy_encrypted_code_alert": {
+    "message": "🔒 암호화된 코드가 복사되었습니다!"
+  },
+  "command_entering_encrypted_code_and_preset_name": {
+    "message": "프리셋 이름과 암호화된 코드를 입력하세요!"
+  },
+  "no_correct_encrypted_code_alert": {
+    "message": "❌ 올바른 암호화 코드가 아닙니다!"
+  },
+  "save_decrypted_preset_completed": { "message": "복호화된 프리셋 저장 완료" },
+  "load_decrypted_preset": { "message": "프리셋이 가져와졌습니다!" },
+  "add_color_into_preset_title": { "message": "프리셋에 색상 추가" },
+  "back_to_detail": { "message": "돌아가기" },
+  "command_selecting_colors_for_save": {
+    "message": "저장할 색상을 선택하세요!"
+  },
+  "no_find_saved_preset": { "message": "선택한 프리셋을 찾을 수 없습니다." },
+  "select_or_enter_new_preset_name": {
+    "message": "프리셋을 선택하거나 새 프리셋 이름을 입력하세요."
+  },
+  "save_colors_into_preset_alert": {
+    "message": "색상이 프리셋에 저장되었습니다!"
+  },
+  "color_group": { "message": "색상 그룹" },
+  "black_and_white_series": { "message": "흑백 계열" },
+  "enter_color_name_optional": { "message": "색상 이름(선택 사항)" },
+  "extract_color_mode": { "message": "색 추출 모드" }
+}

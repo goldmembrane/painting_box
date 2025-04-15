@@ -1,0 +1,93 @@
+{
+  "popup_title": { "message": "Color Preset" },
+  "app_name": { "message": "Palette Box" },
+  "extension_description": {
+    "message": "Extract colors, save them to presets, and transfer the saved presets to your development environment."
+  },
+  "saved_presets": { "message": "Saved Preset" },
+  "create_new_preset": { "message": "Create by entering only the name" },
+  "enter_preset_name": { "message": "Enter preset name" },
+  "create_preset_button": { "message": "Create preset" },
+  "import_from_code": { "message": "Import preset with code" },
+  "enter_encrypted_code": { "message": "Enter encrypted code" },
+  "import_code_button": { "message": "Import presets with code" },
+  "preset_detail": { "message": "Preset details" },
+  "edit": { "message": "Edit" },
+  "edit_names": { "message": "Change Name" },
+  "save_names": { "message": "Save" },
+  "export_code_button": { "message": "Export Code" },
+  "hide_code": { "message": "Hide Code" },
+  "subscribe_prompt": {
+    "message": "🔒 Subscription required for more features!"
+  },
+  "subscribe_button": { "message": "Subscribe" },
+  "cancel_subscribe_button": { "message": "Cancel Subscription" },
+  "new_preset": { "message": "Create new preset" },
+  "inqury_text": { "message": "Have a frequently asked question?" },
+  "to_inqury_text": { "message": "Please contact" },
+  "no_captured_image": { "message": "No captured image" },
+  "no_extracted_colors": { "message": "No color extracted" },
+  "select_color": { "message": "Select" },
+  "selected_color": { "message": "Selected" },
+  "all_select_colors": { "message": "Select All" },
+  "setting": { "message": "Setting" },
+  "color_extracting_result": { "message": "Color Extraction Results" },
+  "extracting_colors": { "message": "🎨 Color extraction in progress..." },
+  "captured_image": { "message": "Captured Image" },
+  "extracted_colors": { "message": "Extracted Colors" },
+  "show_selected_colors": { "message": "Selected Colors" },
+  "save_colors_to_preset_title": { "message": "Save Preset" },
+  "select_preset": { "message": "Select Preset" },
+  "save_colors_to_preset": { "message": "Save colors to preset" },
+  "create_new_preset_immediately": { "message": "Create New Preset" },
+  "enter_new_preset_name": { "message": "Enter new preset name" },
+  "empty_preset": { "message": "There are no saved presets." },
+  "no_google_email": {
+    "message": "There is no Google account information. Please check your login status."
+  },
+  "command_entering_preset_name": { "message": "Please enter preset name!" },
+  "already_existed_preset_name": {
+    "message": "Preset name already exists. Please enter a different name."
+  },
+  "create_preset_alert": { "message": "Preset created!" },
+  "export_preset": { "message": "Export preset" },
+  "enter_color_name": { "message": "Enter color name" },
+  "modify_color_name_alert": { "message": "✅ Color name saved!" },
+  "no_preset_or_colors": { "message": "There are no colors or presets." },
+  "add_colors_into_preset": {
+    "message": "✅ Colors have been added to presets."
+  },
+  "no_saved_preset": { "message": "📭 There are no saved presets." },
+  "fail_download": { "message": "❌ Download failed." },
+  "copy_encrypted_code_alert": {
+    "message": "🔒 The encrypted code has been copied!"
+  },
+  "command_entering_encrypted_code_and_preset_name": {
+    "message": "Enter your preset name and encrypted code!"
+  },
+  "no_correct_encrypted_code_alert": {
+    "message": "❌ This is not a valid encryption code!"
+  },
+  "save_decrypted_preset_completed": {
+    "message": "Decrypted preset save complete"
+  },
+  "load_decrypted_preset": { "message": "Presets have been imported!" },
+  "add_color_into_preset_title": { "message": "Add color to preset" },
+  "back_to_detail": { "message": "Go back" },
+  "command_selecting_colors_for_save": {
+    "message": "Choose a color to save!"
+  },
+  "no_find_saved_preset": {
+    "message": "The selected preset could not be found."
+  },
+  "select_or_enter_new_preset_name": {
+    "message": "Select a preset or enter a new preset name."
+  },
+  "save_colors_into_preset_alert": {
+    "message": "The colors have been saved to your presets!"
+  },
+  "color_group": { "message": "Color group" },
+  "black_and_white_series": { "message": "Black and white series" },
+  "enter_color_name_optional": { "message": "Color name (optional)" },
+  "extract_color_mode": { "message": "Color Extraction Mode" }
+}
