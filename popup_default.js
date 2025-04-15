@@ -24,9 +24,6 @@ function fetchSubscriptionStatusFromBackground() {
       if (response.success) {
         const { email, isSubscribed } = response;
 
-        console.log("✅ 구글 이메일:", email);
-        console.log("✅ 구독 상태:", isSubscribed);
-
         // ✅ 저장
         chrome.storage.sync.set({ isSubscribed, userEmail: email });
 
@@ -270,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("subscribeBtn").addEventListener("click", () => {
     chrome.storage.sync.get(["userEmail"], async (data) => {
       const email = data.userEmail;
-      console.log(email);
 
       if (!email) {
         alert(chrome.i18n.getMessage("no_google_email"));
@@ -405,7 +401,6 @@ function applyDarkMode() {
 // ✅ `chrome.storage.onChanged` 리스너 추가 (자동 업데이트)
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (changes.colorPresets) {
-    console.log("📢 프리셋 변경 감지, 업데이트 수행");
     loadPresets();
   }
 });
@@ -457,7 +452,6 @@ document.getElementById("savePreset").addEventListener("click", () => {
 
     presets.push(newPreset);
     chrome.storage.sync.set({ colorPresets: presets }, () => {
-      console.log("✅ 새로운 프리셋 저장 완료:", newPreset);
       loadPresets();
 
       // ✅ 저장 후 메인 화면으로 돌아감
@@ -745,9 +739,6 @@ function savePresetColorNames() {
 
     // ✅ 변경된 데이터 저장
     chrome.storage.sync.set({ colorPresets: presets }, () => {
-      console.log(
-        `✅ 프리셋 ${selectedPresetIndex}의 색상 이름이 저장되었습니다.`
-      );
       alert(chrome.i18n.getMessage("modify_color_name_alert"));
       colorNameChanges = {}; // ✅ 저장 후 임시 데이터 초기화
     });
@@ -1028,7 +1019,6 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
 
     presets.push(newPreset);
     chrome.storage.sync.set({ colorPresets: presets }, () => {
-      console.log(`✅ 복호화된 프리셋 "${presetName}" 저장 완료:`, newPreset);
       loadPresets();
       document.getElementById("newPresetScreen").classList.add("hidden");
       document.getElementById("presetContainer").classList.remove("hidden");
@@ -1058,8 +1048,6 @@ document.getElementById("subscribeNow").addEventListener("click", () => {
     const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
       encryptedEmail
     )}`;
-
-    console.log(subscribeUrl);
 
     // ✅ 새 탭으로 구독 페이지 열기
     window.open(subscribeUrl, "_blank");
