@@ -6,8 +6,6 @@ script.onload = () => {
 };
 document.head.appendChild(script);
 
-let isSubscribed = false;
-
 // ✅ 구독 배너 보여주기 여부
 const subscriptionBanner = document.getElementById("subscriptionBanner");
 
@@ -414,62 +412,68 @@ document.getElementById("savePreset").addEventListener("click", () => {
     return;
   }
 
-  chrome.storage.sync.get(["colorPresets", "selectedColors"], (data) => {
-    let presets = data.colorPresets || [];
-    let selectedColors = Array.from(data.selectedColors || []);
+  chrome.storage.sync.get(
+    ["colorPresets", "selectedColors", "isSubscribed"],
+    (data) => {
+      let presets = data.colorPresets || [];
+      let selectedColors = Array.from(data.selectedColors || []);
+      let isSubscribed = data.isSubscribed || false;
 
-    // ✅ 동일한 프리셋 이름이 있는지 확인
-    if (presets.some((preset) => preset.name === presetName)) {
-      alert(chrome.i18n.getMessage("already_existed_preset_name"));
-      return;
-    }
+      // ✅ 동일한 프리셋 이름이 있는지 확인
+      if (presets.some((preset) => preset.name === presetName)) {
+        alert(chrome.i18n.getMessage("already_existed_preset_name"));
+        return;
+      }
 
-    // ✅ 구독이 없고 프리셋 개수가 2개 이상이면 제한
-    if (!isSubscribed && presets.length >= 1) {
-      const banner = document.getElementById("subscriptionBanner");
-      banner.classList.remove("hidden"); // ✅ 배너 표시
-      setTimeout(() => {
-        banner.classList.add("show");
-        banner.classList.add("shifted");
-      }, 500);
-
-      // ✅ 10초 후 배너 자동 숨김
-      setTimeout(() => {
-        banner.classList.remove("show");
-        banner.classList.remove("shifted");
+      // ✅ 구독이 없고 프리셋 개수가 2개 이상이면 제한
+      if (!isSubscribed && presets.length >= 1) {
+        console.log(isSubscribed);
+        const banner = document.getElementById("subscriptionBanner");
+        banner.classList.remove("hidden"); // ✅ 배너 표시
         setTimeout(() => {
-          banner.classList.add("hidden");
+          banner.classList.add("show");
+          banner.classList.add("shifted");
         }, 500);
-      }, 5000); // 5초 후 실행 (5000ms)
-      return;
+
+        // ✅ 10초 후 배너 자동 숨김
+        setTimeout(() => {
+          banner.classList.remove("show");
+          banner.classList.remove("shifted");
+          setTimeout(() => {
+            banner.classList.add("hidden");
+          }, 500);
+        }, 5000); // 5초 후 실행 (5000ms)
+        return;
+      }
+
+      let newPreset = {
+        id: Date.now(),
+        name: presetName,
+        colors: selectedColors,
+      };
+
+      presets.push(newPreset);
+      chrome.storage.sync.set({ colorPresets: presets }, () => {
+        loadPresets();
+
+        // ✅ 저장 후 메인 화면으로 돌아감
+        document.getElementById("newPresetScreen").classList.add("hidden");
+        document.getElementById("presetContainer").classList.remove("hidden");
+        document.getElementById("navBarNewPreset").classList.add("hidden");
+        document.getElementById("navBarMain").classList.remove("hidden");
+        document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
+        alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
+      });
     }
-
-    let newPreset = {
-      id: Date.now(),
-      name: presetName,
-      colors: selectedColors,
-    };
-
-    presets.push(newPreset);
-    chrome.storage.sync.set({ colorPresets: presets }, () => {
-      loadPresets();
-
-      // ✅ 저장 후 메인 화면으로 돌아감
-      document.getElementById("newPresetScreen").classList.add("hidden");
-      document.getElementById("presetContainer").classList.remove("hidden");
-      document.getElementById("navBarNewPreset").classList.add("hidden");
-      document.getElementById("navBarMain").classList.remove("hidden");
-      document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
-      alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
-    });
-  });
+  );
 });
 
 // ✅ 저장된 프리셋 불러오기 및 UI 업데이트
 function loadPresets() {
-  chrome.storage.sync.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets", "isSubscribed"], (data) => {
     let presetContainer = document.getElementById("presetList");
     presetContainer.innerHTML = "";
+    let isSubscribed = data.isSubscribed || false;
 
     if (data.colorPresets && data.colorPresets.length > 0) {
       data.colorPresets.forEach((preset, presetIndex) => {
@@ -746,23 +750,26 @@ function savePresetColorNames() {
 }
 
 document.getElementById("exportPresetBtn").addEventListener("click", () => {
-  if (!isSubscribed) {
-    subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-    setTimeout(() => {
-      subscriptionBanner.classList.add("show");
-      subscriptionBanner.classListadd("shifted");
-    }, 500);
-
-    setTimeout(() => {
-      subscriptionBanner.classList.remove("show");
-      subscriptionBanner.classList.remove("shifted");
+  chrome.storage.sync.get(["isSubscribed"], (data) => {
+    let isSubscribed = data.isSubscribed || false;
+    if (!isSubscribed) {
+      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
       setTimeout(() => {
-        subscriptionBanner.classList.add("hidden");
+        subscriptionBanner.classList.add("show");
+        subscriptionBanner.classListadd("shifted");
       }, 500);
-    }, 5000);
-  } else {
-    exportPresetInPopup();
-  }
+
+      setTimeout(() => {
+        subscriptionBanner.classList.remove("show");
+        subscriptionBanner.classList.remove("shifted");
+        setTimeout(() => {
+          subscriptionBanner.classList.add("hidden");
+        }, 500);
+      }, 5000);
+    } else {
+      exportPresetInPopup();
+    }
+  });
 });
 
 // ✅ 프리셋 목록으로 돌아가기
@@ -930,36 +937,40 @@ async function encryptAndCopyToClipboard(
 document.getElementById("sendToCode").addEventListener("click", () => {
   if (selectedPresetIndex === null) return;
 
-  if (!isSubscribed) {
-    subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-    setTimeout(() => {
-      subscriptionBanner.classList.add("show");
-      subscriptionBanner.classListadd("shifted");
-    }, 500);
+  chrome.storage.sync.get(["isSubscribed"], (data) => {
+    let isSubscribed = data.isSubscribed || false;
 
-    setTimeout(() => {
-      subscriptionBanner.classList.remove("show");
-      subscriptionBanner.classList.remove("shifted");
+    if (!isSubscribed) {
+      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
       setTimeout(() => {
-        subscriptionBanner.classList.add("hidden");
+        subscriptionBanner.classList.add("show");
+        subscriptionBanner.classListadd("shifted");
       }, 500);
-    }, 5000);
-  } else {
-    chrome.storage.sync.get(["colorPresets"], (data) => {
-      let preset = data.colorPresets[selectedPresetIndex];
-      let encryptedCode = encryptColorsWithAES(preset);
 
-      // ✅ 클립보드에 복사
-      navigator.clipboard
-        .writeText(encryptedCode)
-        .then(() => {
-          alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
-        })
-        .catch((err) => {
-          console.error("❌ 클립보드 복사 실패:", err);
-        });
-    });
-  }
+      setTimeout(() => {
+        subscriptionBanner.classList.remove("show");
+        subscriptionBanner.classList.remove("shifted");
+        setTimeout(() => {
+          subscriptionBanner.classList.add("hidden");
+        }, 500);
+      }, 5000);
+    } else {
+      chrome.storage.sync.get(["colorPresets"], (data) => {
+        let preset = data.colorPresets[selectedPresetIndex];
+        let encryptedCode = encryptColorsWithAES(preset);
+
+        // ✅ 클립보드에 복사
+        navigator.clipboard
+          .writeText(encryptedCode)
+          .then(() => {
+            alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
+          })
+          .catch((err) => {
+            console.error("❌ 클립보드 복사 실패:", err);
+          });
+      });
+    }
+  });
 });
 
 // ✅ AES-256 암호화된 데이터를 복호화하는 함수
