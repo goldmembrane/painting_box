@@ -1,35 +1,46 @@
 let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
 let selectedColorNames = {};
 
-let isSubscribed = false;
-
 const subscriptionBanner = document.getElementById("subscriptionBanner");
 
 // ✅ 구독 상태 확인 함수
 function checkSubscriptionStatus() {
-  chrome.storage.sync.get(["isSubscribed"], (data) => {
-    isSubscribed = data.isSubscribed || false;
+  chrome.runtime.sendMessage(
+    { action: "getSubscriptionStatus" },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        console.error("❌ 메시지 전송 오류:", chrome.runtime.lastError.message);
+        return;
+      }
 
-    if (!isSubscribed) {
-      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+      if (response.success) {
+        const { email, isSubscribed } = response;
 
-      setTimeout(() => {
-        subscriptionBanner.classList.add("show");
-        subscriptionBanner.classList.add("shifted");
-      }, 500);
+        // ✅ 저장
+        chrome.storage.sync.set({ isSubscribed, userEmail: email });
 
-      setTimeout(() => {
-        subscriptionBanner.classList.remove("show");
-        subscriptionBanner.classList.remove("shifted");
+        if (!isSubscribed) {
+          subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
+          setTimeout(() => {
+            subscriptionBanner.classList.add("show");
+            subscriptionBanner.classList.add("shifted");
+          }, 500);
 
-        setTimeout(() => {
-          subscriptionBanner.classList.add("hidden");
-        }, 500);
-      }, 5000);
-    } else {
-      subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+          setTimeout(() => {
+            subscriptionBanner.classList.remove("show");
+            subscriptionBanner.classList.remove("shifted");
+            setTimeout(() => {
+              subscriptionBanner.classList.add("hidden");
+            }, 500);
+          }, 5000);
+        } else {
+          subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+        }
+      } else {
+        console.warn("❌ 응답 실패:", response.error);
+      }
     }
-  });
+  );
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -349,8 +360,9 @@ function saveNewPreset() {
     colorNames: invertedColorNames, // ✅ 변경된 색상 이름 포함하여 저장
   };
 
-  chrome.storage.sync.get(["colorPresets"], (data) => {
+  chrome.storage.sync.get(["colorPresets", "isSubscribed"], (data) => {
     let presets = data.colorPresets || [];
+    let isSubscribed = data.isSubscribed || false;
 
     if (selectedPresetId) {
       // ✅ 기존 프리셋에 색상 추가 (이름 포함)
