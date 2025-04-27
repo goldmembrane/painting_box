@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   chrome.storage.local.get(
-    ["capturedImage", "extractedColors", "darkMode"],
+    ["capturedImage", "darkMode", "dataImage"],
     (data) => {
       document.getElementById("loadingScreen").classList.add("hidden");
       document.getElementById("mainContent").classList.remove("hidden");
@@ -132,14 +132,38 @@ document.addEventListener("DOMContentLoaded", () => {
         imageContainer.innerText = chrome.i18n.getMessage("no_captured_image");
       }
 
-      if (data.extractedColors && data.extractedColors.length > 0) {
-        const topColors = extractDominantColorsStrict(
-          data.extractedColors,
-          20,
-          0.15
-        );
+      if (data.capturedImage) {
+        const img = new Image();
+        img.src = data.capturedImage;
+        img.crossOrigin = "Anonymous";
 
-        renderColorList(topColors, colorContainer);
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          ).data;
+
+          const dominantColors = extractDominantColorsStrictFromImageData(
+            imageData,
+            canvas.width,
+            canvas.height,
+            20
+          );
+
+          console.log("[최종 dominant colors]", dominantColors);
+
+          // 👉 dominantColors를 UI로 뿌려주기
+          renderColorList(dominantColors, colorContainer);
+        };
       } else {
         colorContainer.innerText = chrome.i18n.getMessage(
           "no_extracted_colors"
@@ -523,19 +547,36 @@ function updateSelectedColorsPreview() {
   });
 }
 
-function extractDominantColorsStrict(
-  hexColors,
+function extractDominantColorsStrictFromImageData(
+  imageData,
+  width,
+  height,
   topN = 10,
-  minRatio = 0.01,
-  mergeThreshold = 5
+  minRatio = 0.005,
+  mergeThreshold = 2
 ) {
-  const totalPixels = hexColors.length;
+  const totalPixels = width * height;
   const frequencyMap = {};
 
-  // ✅ 1차: HEX 그대로 빈도 계산
-  hexColors.forEach((hex) => {
+  console.log(imageData);
+
+  // ✅ 모든 픽셀 하나하나 읽기
+  for (let i = 0; i < imageData.length; i += 4) {
+    const r = imageData[i];
+    const g = imageData[i + 1];
+    const b = imageData[i + 2];
+    const a = imageData[i + 3];
+
+    if (a === 0) continue; // 투명한 픽셀 무시
+
+    const hex = `#${r.toString(16).padStart(2, "0")}${g
+      .toString(16)
+      .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+
     frequencyMap[hex] = (frequencyMap[hex] || 0) + 1;
-  });
+  }
+
+  console.log("[색상별 픽셀 수]", frequencyMap);
 
   // ✅ 출현 비율 기준 필터
   let filtered = Object.entries(frequencyMap)
@@ -544,53 +585,86 @@ function extractDominantColorsStrict(
 
   console.log("[출현 비율 필터 결과]", filtered);
 
-  // ✅ 분기: filtered가 존재하는 경우 vs 존재하지 않는 경우
-  if (filtered.length > 0) {
-    // 👉 기존 로직: 유사 색 병합
-    filtered.sort((a, b) => b.count - a.count);
-    const result = [];
+  const result = [];
 
-    filtered.forEach(({ hex }) => {
+  if (filtered.length > 0) {
+    // 👉 정상 루트
+    filtered.sort((a, b) => b.count - a.count);
+
+    filtered.forEach(({ hex, count }) => {
       const rgb = hexToRgbArray(hex);
-      const isSimilar = result.find((existingHex) => {
+      const isSimilar = result.find(({ hex: existingHex }) => {
         const d = rgbDistance(rgb, hexToRgbArray(existingHex));
         return d < mergeThreshold;
       });
 
       if (!isSimilar) {
-        result.push(hex);
+        result.push({ hex, count });
       }
     });
 
-    console.log("[대표 색 추출 결과]", result.slice(0, topN));
-    return result.slice(0, topN);
+    result.sort((a, b) => {
+      const aHsl = hexToHsl(a.hex);
+      const bHsl = hexToHsl(b.hex);
+
+      if (bHsl.l !== aHsl.l) {
+        return bHsl.l - aHsl.l; // 밝기(l) 내림차순
+      } else {
+        return aHsl.s - bHsl.s; // 밝기 같으면 채도(s) 오름차순
+      }
+    }); // ✅ 병합 이후에도 다시 빈도수 정렬
+    console.log("[대표 색 추출 결과]", result);
+
+    return result.slice(0, topN).map(({ hex }) => hex);
   } else {
-    // 👉 대안 루트: RGB 양자화 후 병합 + 정렬
+    // 👉 대안 루트: RGB 양자화 후 병합
     const quantizedMap = {};
-    hexColors.forEach((hex) => {
-      const qHex = quantizeColor(hex, 16); // RGB 양자화
+
+    for (let i = 0; i < imageData.length; i += 4) {
+      const r = imageData[i];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
+      const a = imageData[i + 3];
+
+      if (a === 0) continue;
+
+      const [qr, qg, qb] = quantizeRgb([r, g, b], 16);
+      const qHex = `#${qr.toString(16).padStart(2, "0")}${qg
+        .toString(16)
+        .padStart(2, "0")}${qb.toString(16).padStart(2, "0")}`;
+
       quantizedMap[qHex] = (quantizedMap[qHex] || 0) + 1;
-    });
+    }
 
     const sorted = Object.entries(quantizedMap)
       .map(([hex, count]) => ({ hex, count }))
       .sort((a, b) => b.count - a.count);
 
-    const result = [];
-    sorted.forEach(({ hex }) => {
+    sorted.forEach(({ hex, count }) => {
       const rgb = hexToRgbArray(hex);
-      const isSimilar = result.find((existingHex) => {
+      const isSimilar = result.find(({ hex: existingHex }) => {
         const d = rgbDistance(rgb, hexToRgbArray(existingHex));
         return d < mergeThreshold;
       });
 
       if (!isSimilar) {
-        result.push(hex);
+        result.push({ hex, count });
       }
     });
 
-    console.log("[양자화 병합 추출 결과]", result.slice(0, topN));
-    return result.slice(0, topN);
+    result.sort((a, b) => {
+      const aHsl = hexToHsl(a.hex);
+      const bHsl = hexToHsl(b.hex);
+
+      if (bHsl.l !== aHsl.l) {
+        return bHsl.l - aHsl.l; // 밝기(l) 내림차순
+      } else {
+        return aHsl.s - bHsl.s; // 밝기 같으면 채도(s) 오름차순
+      }
+    });
+    console.log("[양자화 병합 추출 결과]", result);
+
+    return result.slice(0, topN).map(({ hex }) => hex);
   }
 }
 
@@ -652,6 +726,41 @@ function hexToRgb(hex) {
   hex = hex.replace(/^#/, "");
   const bigint = parseInt(hex, 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+function hexToHsl(hex) {
+  hex = hex.replace(/^#/, "");
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+
+  let h, s, l;
+  l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return { h, s, l }; // 0~1 범위
 }
 
 function renderColorList(colors, container) {

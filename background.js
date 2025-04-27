@@ -152,7 +152,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "saveExtractedColors") {
     chrome.storage.local.set(
       {
-        extractedColors: message.colors,
         capturedImage: message.image,
         popupMode: "colorPicker",
       },
