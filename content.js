@@ -153,25 +153,12 @@ window.extractColorsFromImage = function (imageSrc, x1, y1, x2, y2) {
       height // 캔버스에 그릴 위치
     );
 
-    const colors = new Set();
-    const step = 5; // 샘플링 간격 (너무 촘촘하면 느려짐)
-
-    for (let x = 0; x < width; x += step) {
-      for (let y = 0; y < height; y += step) {
-        const pixel = ctx.getImageData(x, y, 1, 1).data;
-        if (pixel[3] === 0) continue; // 투명 픽셀 무시
-        const hexColor = `#${pixel[0].toString(16).padStart(2, "0")}${pixel[1]
-          .toString(16)
-          .padStart(2, "0")}${pixel[2].toString(16).padStart(2, "0")}`;
-        colors.add(hexColor);
-      }
-    }
+    const imageDataUrl = canvas.toDataURL("image/png");
 
     chrome.runtime.sendMessage(
       {
         action: "saveExtractedColors",
-        colors: Array.from(colors),
-        image: canvas.toDataURL("image/png"),
+        image: imageDataUrl,
       },
       (response) => {
         if (chrome.runtime.lastError) {
