@@ -552,13 +552,11 @@ function extractDominantColorsStrictFromImageData(
   width,
   height,
   topN = 10,
-  minRatio = 0.005,
+  minRatio = 0.003,
   mergeThreshold = 2
 ) {
   const totalPixels = width * height;
   const frequencyMap = {};
-
-  console.log(imageData);
 
   // ✅ 모든 픽셀 하나하나 읽기
   for (let i = 0; i < imageData.length; i += 4) {
@@ -583,11 +581,11 @@ function extractDominantColorsStrictFromImageData(
     .filter(([hex, count]) => count / totalPixels >= minRatio)
     .map(([hex, count]) => ({ hex, count }));
 
-  console.log("[출현 비율 필터 결과]", filtered);
+  console.log("[출현 비율 필터 결과]", filtered.length);
 
   const result = [];
 
-  if (filtered.length > 0) {
+  if (filtered.length < 30 && filtered.length !== 0) {
     // 👉 정상 루트
     filtered.sort((a, b) => b.count - a.count);
 
@@ -761,6 +759,14 @@ function hexToHsl(hex) {
   }
 
   return { h, s, l }; // 0~1 범위
+}
+
+function quantizeRgb([r, g, b], levels = 16) {
+  const factor = 256 / levels;
+  const qr = Math.floor(r / factor) * factor;
+  const qg = Math.floor(g / factor) * factor;
+  const qb = Math.floor(b / factor) * factor;
+  return [qr, qg, qb];
 }
 
 function renderColorList(colors, container) {
