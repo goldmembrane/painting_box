@@ -574,18 +574,14 @@ function extractDominantColorsStrictFromImageData(
     frequencyMap[hex] = (frequencyMap[hex] || 0) + 1;
   }
 
-  console.log("[색상별 픽셀 수]", frequencyMap);
-
   // ✅ 출현 비율 기준 필터
   let filtered = Object.entries(frequencyMap)
     .filter(([hex, count]) => count / totalPixels >= minRatio)
     .map(([hex, count]) => ({ hex, count }));
 
-  console.log("[출현 비율 필터 결과]", filtered.length);
-
   const result = [];
 
-  if (filtered.length < 30 && filtered.length !== 0) {
+  if (filtered.length !== 0) {
     // 👉 정상 루트
     filtered.sort((a, b) => b.count - a.count);
 
@@ -611,7 +607,6 @@ function extractDominantColorsStrictFromImageData(
         return aHsl.s - bHsl.s; // 밝기 같으면 채도(s) 오름차순
       }
     }); // ✅ 병합 이후에도 다시 빈도수 정렬
-    console.log("[대표 색 추출 결과]", result);
 
     return result.slice(0, topN).map(({ hex }) => hex);
   } else {
@@ -651,16 +646,17 @@ function extractDominantColorsStrictFromImageData(
     });
 
     result.sort((a, b) => {
-      const aHsl = hexToHsl(a.hex);
-      const bHsl = hexToHsl(b.hex);
+      const ah = hexToHsl(a.hex);
+      const bh = hexToHsl(b.hex);
 
-      if (bHsl.l !== aHsl.l) {
-        return bHsl.l - aHsl.l; // 밝기(l) 내림차순
+      if (Math.abs(bh.l - ah.l) > 0.01) {
+        return bh.l - ah.l;
+      } else if (Math.abs(b.count - a.count) > 0) {
+        return b.count - a.count;
       } else {
-        return aHsl.s - bHsl.s; // 밝기 같으면 채도(s) 오름차순
+        return ah.s - bh.s;
       }
     });
-    console.log("[양자화 병합 추출 결과]", result);
 
     return result.slice(0, topN).map(({ hex }) => hex);
   }
