@@ -76,6 +76,16 @@ window.startColorSelection = function () {
     // ✅ 마우스 이벤트 원상 복구
     stopSelectionMode();
 
+    // ✅ 선택 박스 제거
+    if (selectionBox) {
+      selectionBox.remove();
+      selectionBox = null;
+    }
+
+    if (overlay) {
+      overlay.remove();
+    }
+
     // ✅ 선택된 영역을 전달
     chrome.runtime.sendMessage({
       action: "captureScreen",
@@ -86,16 +96,6 @@ window.startColorSelection = function () {
         y2: endClientY,
       },
     });
-
-    // ✅ 선택 박스 제거
-    if (selectionBox) {
-      selectionBox.remove();
-      selectionBox = null;
-    }
-
-    if (overlay) {
-      overlay.remove();
-    }
   }
 
   function stopSelectionMode() {
