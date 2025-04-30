@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   chrome.storage.local.get(
-    ["capturedImage", "extractedColors", "darkMode"],
+    ["capturedImage", "darkMode", "dataImage"],
     (data) => {
       document.getElementById("loadingScreen").classList.add("hidden");
       document.getElementById("mainContent").classList.remove("hidden");
@@ -132,34 +132,38 @@ document.addEventListener("DOMContentLoaded", () => {
         imageContainer.innerText = chrome.i18n.getMessage("no_captured_image");
       }
 
-      if (data.extractedColors && data.extractedColors.length > 0) {
-        let { colorClusters, grayscaleColors } =
-          separateGrayscaleAndGroupByGMMImproved(data.extractedColors);
+      if (data.capturedImage) {
+        const img = new Image();
+        img.src = data.capturedImage;
+        img.crossOrigin = "Anonymous";
 
-        const sortedClusters = sortColorGroupsByFrequency(
-          colorClusters,
-          data.extractedColors
-        );
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          canvas.width = img.width;
+          canvas.height = img.height;
 
-        // ✅ 정렬된 그룹 순서대로 출력
-        sortedClusters.forEach((group, index) => {
-          group.sort(); // 그룹 내부는 오름차순
-          createColorGroup(
-            `${chrome.i18n.getMessage("color_group")} ${index + 1}`,
-            group,
-            colorContainer
+          ctx.drawImage(img, 0, 0);
+
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          ).data;
+
+          const dominantColors = extractDominantColorsStrictFromImageData(
+            imageData,
+            canvas.width,
+            canvas.height,
+            20
           );
-        });
 
-        // ✅ 흑백 계열 색상 표시 (정렬 적용)
-        if (grayscaleColors.length > 0) {
-          grayscaleColors.sort(); // ✅ 오름차순 정렬
-          createColorGroup(
-            chrome.i18n.getMessage("black_and_white_series"),
-            grayscaleColors,
-            colorContainer
-          );
-        }
+          console.log("[최종 dominant colors]", dominantColors);
+
+          // 👉 dominantColors를 UI로 뿌려주기
+          renderColorList(dominantColors, colorContainer);
+        };
       } else {
         colorContainer.innerText = chrome.i18n.getMessage(
           "no_extracted_colors"
@@ -543,165 +547,199 @@ function updateSelectedColorsPreview() {
   });
 }
 
-// ✅ 색상 분리 및 GMM + Mahalanobis + BIC
-function separateGrayscaleAndGroupByGMMImproved(colors) {
-  const grayscaleColors = new Set();
-  const colorColors = [];
+function extractDominantColorsStrictFromImageData(
+  imageData,
+  width,
+  height,
+  topN = 10,
+  minRatio = 0.003,
+  mergeThreshold = 2
+) {
+  const totalPixels = width * height;
+  const frequencyMap = {};
 
-  colors.forEach((hex) => {
-    if (isStrictGrayscale(hex)) {
-      grayscaleColors.add(hex);
-    } else {
-      colorColors.push(hex);
-    }
-  });
+  // ✅ 모든 픽셀 하나하나 읽기
+  for (let i = 0; i < imageData.length; i += 4) {
+    const r = imageData[i];
+    const g = imageData[i + 1];
+    const b = imageData[i + 2];
+    const a = imageData[i + 3];
 
-  // ✅ 흑백 색상이 컬러 그룹에 중복되는 걸 방지
-  const colorClusters = clusterWithGMMImproved(colorColors);
+    if (a === 0) continue; // 투명한 픽셀 무시
 
-  // ✅ 클러스터 내에서도 중복 제거
-  const filteredColorClusters = colorClusters
-    .map((cluster) => {
-      const uniqueSet = new Set(
-        cluster.filter((hex) => !grayscaleColors.has(hex))
-      );
-      return Array.from(uniqueSet);
-    })
-    .filter((cluster) => cluster.length > 0);
+    const hex = `#${r.toString(16).padStart(2, "0")}${g
+      .toString(16)
+      .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 
-  return {
-    colorClusters: filteredColorClusters,
-    grayscaleColors: Array.from(grayscaleColors),
-  };
-}
-
-function isStrictGrayscale(hex) {
-  const lab = labFromRgbHex(hex);
-  const [L, a, b] = lab;
-
-  const lowLight = L < 20;
-  const highLight = L > 99;
-  const nearGray = Math.abs(a) < 2 && Math.abs(b) < 2;
-
-  return lowLight || highLight || nearGray;
-}
-
-function labFromRgbHex(hex) {
-  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
-  const [x, y, z] = rgbToXyz(r, g, b);
-  return xyzToLab(x, y, z);
-}
-
-// ✅ 클러스터링 with BIC
-function clusterWithGMMImproved(hexColors) {
-  const data = hexColors.map((hex) => labFromRgbHex(hex));
-  let bestBIC = Infinity;
-  let bestClusters = [];
-  let bestMeans = [];
-
-  for (let k = 2; k <= Math.min(20, data.length); k++) {
-    const { clusters, means } = gmmCluster(data, k);
-    const bic = computeBIC(data, clusters, means);
-
-    if (bic < bestBIC) {
-      bestBIC = bic;
-      bestClusters = clusters;
-      bestMeans = means;
-    }
+    frequencyMap[hex] = (frequencyMap[hex] || 0) + 1;
   }
 
-  return bestClusters.map((cluster) => cluster.map((lab) => labToHex(lab)));
-}
+  // ✅ 출현 비율 기준 필터
+  let filtered = Object.entries(frequencyMap)
+    .filter(([hex, count]) => count / totalPixels >= minRatio)
+    .map(([hex, count]) => ({ hex, count }));
 
-// ✅ GMM 클러스터링
-function gmmCluster(data, k) {
-  const means = [];
-  for (let i = 0; i < k; i++) {
-    means.push(data[Math.floor(Math.random() * data.length)]);
-  }
+  const result = [];
 
-  let clusters = [];
-  for (let iter = 0; iter < 10; iter++) {
-    clusters = Array.from({ length: k }, () => []);
-    data.forEach((point) => {
-      let minDist = Infinity;
-      let index = 0;
-      means.forEach((mean, i) => {
-        const d = mahalanobis(point, mean);
-        if (d < minDist) {
-          minDist = d;
-          index = i;
-        }
+  if (filtered.length !== 0) {
+    // 👉 정상 루트
+    filtered.sort((a, b) => b.count - a.count);
+
+    filtered.forEach(({ hex, count }) => {
+      const rgb = hexToRgbArray(hex);
+      const isSimilar = result.find(({ hex: existingHex }) => {
+        const d = rgbDistance(rgb, hexToRgbArray(existingHex));
+        return d < mergeThreshold;
       });
-      clusters[index].push(point);
-    });
 
-    means.forEach((_, i) => {
-      if (clusters[i].length > 0) {
-        means[i] = average(clusters[i]);
+      if (!isSimilar) {
+        result.push({ hex, count });
       }
     });
+
+    result.sort((a, b) => {
+      const aHsl = hexToHsl(a.hex);
+      const bHsl = hexToHsl(b.hex);
+
+      if (bHsl.l !== aHsl.l) {
+        return bHsl.l - aHsl.l; // 밝기(l) 내림차순
+      } else {
+        return aHsl.s - bHsl.s; // 밝기 같으면 채도(s) 오름차순
+      }
+    }); // ✅ 병합 이후에도 다시 빈도수 정렬
+
+    return result.slice(0, topN).map(({ hex }) => hex);
+  } else {
+    // 👉 대안 루트: RGB 양자화 후 병합
+    const quantizedMap = {};
+
+    for (let i = 0; i < imageData.length; i += 4) {
+      const r = imageData[i];
+      const g = imageData[i + 1];
+      const b = imageData[i + 2];
+      const a = imageData[i + 3];
+
+      if (a === 0) continue;
+
+      const [qr, qg, qb] = quantizeRgb([r, g, b], 16);
+      const qHex = `#${qr.toString(16).padStart(2, "0")}${qg
+        .toString(16)
+        .padStart(2, "0")}${qb.toString(16).padStart(2, "0")}`;
+
+      quantizedMap[qHex] = (quantizedMap[qHex] || 0) + 1;
+    }
+
+    const sorted = Object.entries(quantizedMap)
+      .map(([hex, count]) => ({ hex, count }))
+      .sort((a, b) => b.count - a.count);
+
+    sorted.forEach(({ hex, count }) => {
+      const rgb = hexToRgbArray(hex);
+      const isSimilar = result.find(({ hex: existingHex }) => {
+        const d = rgbDistance(rgb, hexToRgbArray(existingHex));
+        return d < mergeThreshold;
+      });
+
+      if (!isSimilar) {
+        result.push({ hex, count });
+      }
+    });
+
+    result.sort((a, b) => {
+      const ah = hexToHsl(a.hex);
+      const bh = hexToHsl(b.hex);
+
+      if (Math.abs(bh.l - ah.l) > 0.01) {
+        return bh.l - ah.l;
+      } else if (Math.abs(b.count - a.count) > 0) {
+        return b.count - a.count;
+      } else {
+        return ah.s - bh.s;
+      }
+    });
+
+    return result.slice(0, topN).map(({ hex }) => hex);
+  }
+}
+
+function rgbDistance(rgb1, rgb2) {
+  return Math.sqrt(
+    Math.pow(rgb1[0] - rgb2[0], 2) +
+      Math.pow(rgb1[1] - rgb2[1], 2) +
+      Math.pow(rgb1[2] - rgb2[2], 2)
+  );
+}
+
+function hexToRgbArray(hex) {
+  hex = hex.replace(/^#/, "");
+  const bigint = parseInt(hex, 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) {
+      h = (g - b) / d + (g < b ? 6 : 0);
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else if (max === b) {
+      h = (r - g) / d + 4;
+    }
+    h /= 6;
   }
 
-  return { clusters, means };
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+
+  return [h, s, v];
 }
 
-// ✅ Mahalanobis Distance
-function mahalanobis(x, mean) {
-  const diff = x.map((val, i) => val - mean[i]);
-  const cov = identityMatrix(x.length, 0.01); // regularized
-  const inv = inverse(cov);
-  const result = multiply(multiplyMatrixVector(inv, diff), diff);
-  return Math.sqrt(result);
+function rgbToHex([r, g, b]) {
+  return "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
-// ✅ 평균
-function average(points) {
-  const len = points.length;
-  const sum = points[0].map((_, i) => points.reduce((acc, p) => acc + p[i], 0));
-  return sum.map((s) => s / len);
+function quantizeColor(hex, levels = 16) {
+  const rgb = hexToRgbArray(hex);
+  const factor = 256 / levels;
+  const qr = Math.floor(rgb[0] / factor) * factor;
+  const qg = Math.floor(rgb[1] / factor) * factor;
+  const qb = Math.floor(rgb[2] / factor) * factor;
+  return rgbToHex([qr, qg, qb]);
 }
 
-// ✅ BIC 계산
-function computeBIC(data, clusters, means) {
-  const n = data.length;
-  const k = clusters.length;
-  const d = data[0].length;
-
-  let logLikelihood = 0;
-  clusters.forEach((cluster, i) => {
-    const mean = means[i];
-    cluster.forEach((point) => {
-      const dist = mahalanobis(point, mean);
-      logLikelihood += -0.5 * dist ** 2;
-    });
-  });
-
-  const numParams = k * (d + 0.5 * d * (d + 1));
-  return -2 * logLikelihood + numParams * Math.log(n);
-}
-
-// ✅ 유틸 함수들
 function hexToRgb(hex) {
   hex = hex.replace(/^#/, "");
   const bigint = parseInt(hex, 16);
   return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
 }
 
-function rgbToHsl([r, g, b]) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
+function hexToHsl(hex) {
+  hex = hex.replace(/^#/, "");
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
 
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
-  let h = 0,
-    s = 0;
-  const l = (max + min) / 2;
 
-  if (max !== min) {
+  let h, s, l;
+  l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
     switch (max) {
       case r:
         h = (g - b) / d + (g < b ? 6 : 0);
@@ -716,232 +754,50 @@ function rgbToHsl([r, g, b]) {
     h /= 6;
   }
 
-  return [h, s, l];
+  return { h, s, l }; // 0~1 범위
 }
 
-function labFromRgbHex(hex) {
-  const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
-  const [x, y, z] = rgbToXyz(r, g, b);
-  return xyzToLab(x, y, z);
+function quantizeRgb([r, g, b], levels = 16) {
+  const factor = 256 / levels;
+  const qr = Math.floor(r / factor) * factor;
+  const qg = Math.floor(g / factor) * factor;
+  const qb = Math.floor(b / factor) * factor;
+  return [qr, qg, qb];
 }
 
-function labToHex([l, a, b]) {
-  const [x, y, z] = labToXyz(l, a, b);
-  const [r, g, b_] = xyzToRgb(x, y, z);
-  return rgbToHex([r, g, b_]);
-}
+function renderColorList(colors, container) {
+  container.innerHTML = ""; // 기존 내용 비움
 
-function rgbToHex([r, g, b]) {
-  return (
-    "#" +
-    [r, g, b]
-      .map((v) => {
-        const hex = Math.round(Math.min(255, Math.max(0, v)) * 255).toString(
-          16
-        );
-        return hex.length === 1 ? "0" + hex : hex;
-      })
-      .join("")
-  );
-}
-
-function rgbTohex(rgbString) {
-  const rgb = rgbString.match(/\d+/g).map(Number);
-  return (
-    "#" +
-    rgb
-      .map((val) => val.toString(16).padStart(2, "0"))
-      .join("")
-      .toUpperCase()
-  );
-}
-
-function multiply(vec1, vec2) {
-  return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0);
-}
-
-function multiplyMatrixVector(matrix, vector) {
-  return matrix.map((row) => multiply(row, vector));
-}
-
-function identityMatrix(size, epsilon = 0) {
-  return Array.from({ length: size }, (_, i) =>
-    Array.from({ length: size }, (_, j) => (i === j ? 1 + epsilon : 0))
-  );
-}
-
-function inverse(matrix) {
-  const size = matrix.length;
-  const identity = identityMatrix(size);
-  const inv = matrix.map((row) => row.slice());
-
-  for (let i = 0; i < size; i++) {
-    let diag = inv[i][i];
-    if (diag === 0) diag = 1e-8;
-    for (let j = 0; j < size; j++) {
-      inv[i][j] = inv[i][j] / diag;
-      identity[i][j] = identity[i][j] / diag;
-    }
-    for (let k = 0; k < size; k++) {
-      if (k !== i) {
-        const factor = inv[k][i];
-        for (let j = 0; j < size; j++) {
-          inv[k][j] -= factor * inv[i][j];
-          identity[k][j] -= factor * identity[i][j];
-        }
-      }
-    }
-  }
-  return identity;
-}
-
-// ✅ XYZ & LAB 변환
-function rgbToXyz(r, g, b) {
-  [r, g, b] = [r, g, b].map((v) =>
-    v > 0.04045 ? ((v + 0.055) / 1.055) ** 2.4 : v / 12.92
-  );
-  const x = r * 0.4124 + g * 0.3576 + b * 0.1805;
-  const y = r * 0.2126 + g * 0.7152 + b * 0.0722;
-  const z = r * 0.0193 + g * 0.1192 + b * 0.9505;
-  return [x, y, z];
-}
-
-function xyzToLab(x, y, z) {
-  [x, y, z] = [x / 0.95047, y / 1.0, z / 1.08883].map((t) =>
-    t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116
-  );
-  const l = 116 * y - 16;
-  const a = 500 * (x - y);
-  const b = 200 * (y - z);
-  return [l, a, b];
-}
-
-function labToXyz(l, a, b) {
-  let y = (l + 16) / 116;
-  let x = a / 500 + y;
-  let z = y - b / 200;
-  [x, y, z] = [x, y, z].map((t) => {
-    const t3 = t ** 3;
-    return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
-  });
-  return [x * 0.95047, y * 1.0, z * 1.08883];
-}
-
-function xyzToRgb(x, y, z) {
-  let r = x * 3.2406 + y * -1.5372 + z * -0.4986;
-  let g = x * -0.9689 + y * 1.8758 + z * 0.0415;
-  let b = x * 0.0557 + y * -0.204 + z * 1.057;
-  return [r, g, b];
-}
-
-// 밝기 기준
-function sortColorsByLightness(hexColors) {
-  return hexColors
-    .map((hex) => ({ hex, l: labFromRgbHex(hex)[0] })) // L 값 추출
-    .sort((a, b) => a.l - b.l) // 밝은 → 어두운 순
-    .map((c) => c.hex);
-}
-
-// ✅ 색상 그룹 UI 생성
-function createColorGroup(title, colors, container) {
-  const colorButtons = [];
-
-  let groupContainer = document.createElement("div");
-  groupContainer.classList.add("color-group");
-
-  let header = document.createElement("div");
-  header.classList.add("group-header");
-
-  const sortedColors = sortColorsByLightness(colors);
-
-  let colorPreview = document.createElement("div");
-  colorPreview.classList.add("color-preview");
-  colorPreview.style.backgroundColor = sortedColors[0];
-
-  let titleElement = document.createElement("span");
-  titleElement.innerText = title;
-
-  // ✅ [추가] 전체 선택 버튼
-  const selectAllBtn = document.createElement("button");
-  selectAllBtn.className = "select-all-button";
-  selectAllBtn.innerText = chrome.i18n.getMessage("all_select_colors");
-
-  selectAllBtn.onclick = () => {
-    const allSelected = colorButtons.every(({ color }) =>
-      selectedColors.has(color)
-    );
-
-    colorButtons.forEach(({ color, button }) => {
-      const isSelected = selectedColors.has(color);
-      if (allSelected && isSelected) {
-        // 전체 선택된 상태 → 전체 해제
-        toggleColorSelection(color, button);
-      } else if (!allSelected && !isSelected) {
-        // 아직 선택되지 않은 경우만 선택
-        toggleColorSelection(color, button);
-      }
-    });
-  };
-
-  let toggleButton = document.createElement("button");
-  toggleButton.innerHTML = "▼";
-  toggleButton.classList.add("toggle-button");
-  toggleButton.onclick = () => {
-    if (colorListContainer.style.display === "none") {
-      colorListContainer.style.display = "flex";
-      toggleButton.innerText = "▲";
-    } else {
-      colorListContainer.style.display = "none";
-      toggleButton.innerText = "▼";
-    }
-  };
-
-  header.appendChild(colorPreview);
-  header.appendChild(titleElement);
-  header.appendChild(toggleButton);
-  groupContainer.appendChild(header);
-
-  let colorListContainer = document.createElement("div");
-  colorListContainer.classList.add("color-list-container");
-  colorListContainer.style.display = "none";
-
-  colorListContainer.appendChild(selectAllBtn);
-
-  sortedColors.forEach((color) => {
-    let colorBoxContainer = document.createElement("div");
+  colors.forEach((color) => {
+    const colorBoxContainer = document.createElement("div");
     colorBoxContainer.classList.add("color-box-container");
 
-    let colorInfoContainer = document.createElement("div");
+    const colorInfoContainer = document.createElement("div");
     colorInfoContainer.classList.add("color-info-container");
 
-    let colorBox = document.createElement("div");
+    const colorBox = document.createElement("div");
     colorBox.classList.add("color-box");
     colorBox.style.backgroundColor = color;
 
-    let rgb = hexToRgb(color);
-    let rgbText = `RGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    const rgb = hexToRgb(color);
+    const rgbText = `RGB(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 
-    let textBox = document.createElement("div");
+    const textBox = document.createElement("div");
     textBox.classList.add("color-text");
     textBox.innerText = `${color}\n${rgbText}`;
 
     colorInfoContainer.appendChild(colorBox);
     colorInfoContainer.appendChild(textBox);
 
-    let saveBtn = document.createElement("button");
+    const saveBtn = document.createElement("button");
     saveBtn.innerText = chrome.i18n.getMessage("select_color");
     saveBtn.classList.add("color-select-btn");
     saveBtn.onclick = () => toggleColorSelection(color, saveBtn);
 
-    colorButtons.push({ color, button: saveBtn });
-
     colorBoxContainer.appendChild(colorInfoContainer);
     colorBoxContainer.appendChild(saveBtn);
-    colorListContainer.appendChild(colorBoxContainer);
+    container.appendChild(colorBoxContainer);
   });
-
-  groupContainer.appendChild(colorListContainer);
-  container.appendChild(groupContainer);
 }
 
 function sortColorGroupsByFrequency(colorClusters, extractedColors) {

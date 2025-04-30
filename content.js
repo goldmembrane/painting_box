@@ -19,12 +19,18 @@ window.startColorSelection = function () {
   overlay.addEventListener("mousemove", onMouseMove, true);
   overlay.addEventListener("mouseup", onMouseUp, true);
 
+  let startPageX, startPageY; // 박스 표시용
+  let startClientX, startClientY; // 캡처용
+
   function onMouseDown(event) {
     if (!isDragging) return;
 
     event.preventDefault();
-    startX = event.clientX;
-    startY = event.clientY;
+
+    startPageX = event.pageX;
+    startPageY = event.pageY;
+    startClientX = event.clientX;
+    startClientY = event.clientY;
 
     // ✅ 선택 영역 박스 생성
     if (!selectionBox) {
@@ -36,8 +42,8 @@ window.startColorSelection = function () {
       document.body.appendChild(selectionBox);
     }
 
-    selectionBox.style.left = `${startX}px`;
-    selectionBox.style.top = `${startY}px`;
+    selectionBox.style.left = `${startPageX}px`;
+    selectionBox.style.top = `${startPageY}px`;
     selectionBox.style.width = "0px";
     selectionBox.style.height = "0px";
   }
@@ -47,13 +53,16 @@ window.startColorSelection = function () {
 
     event.preventDefault();
 
-    let width = event.clientX - startX;
-    let height = event.clientY - startY;
+    const currentPageX = event.pageX;
+    const currentPageY = event.pageY;
+
+    let width = currentPageX - startPageX;
+    let height = currentPageY - startPageY;
 
     selectionBox.style.width = `${Math.abs(width)}px`;
     selectionBox.style.height = `${Math.abs(height)}px`;
-    selectionBox.style.left = `${Math.min(startX, event.clientX)}px`;
-    selectionBox.style.top = `${Math.min(startY, event.clientY)}px`;
+    selectionBox.style.left = `${Math.min(startPageX, currentPageX)}px`;
+    selectionBox.style.top = `${Math.min(startPageY, currentPageY)}px`;
   }
 
   function onMouseUp(event) {
@@ -61,17 +70,11 @@ window.startColorSelection = function () {
 
     event.preventDefault();
 
-    let endX = event.clientX;
-    let endY = event.clientY;
+    const endClientX = event.clientX;
+    const endClientY = event.clientY;
 
     // ✅ 마우스 이벤트 원상 복구
     stopSelectionMode();
-
-    // ✅ 선택된 영역을 전달
-    chrome.runtime.sendMessage({
-      action: "captureScreen",
-      area: { x1: startX, y1: startY, x2: endX, y2: endY },
-    });
 
     // ✅ 선택 박스 제거
     if (selectionBox) {
@@ -82,6 +85,17 @@ window.startColorSelection = function () {
     if (overlay) {
       overlay.remove();
     }
+
+    // ✅ 선택된 영역을 전달
+    chrome.runtime.sendMessage({
+      action: "captureScreen",
+      area: {
+        x1: startClientX,
+        y1: startClientY,
+        x2: endClientX,
+        y2: endClientY,
+      },
+    });
   }
 
   function stopSelectionMode() {
@@ -117,33 +131,34 @@ window.extractColorsFromImage = function (imageSrc, x1, y1, x2, y2) {
   img.src = imageSrc;
 
   img.onload = () => {
-    let canvas = document.createElement("canvas");
-    let ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const width = Math.abs(x2 - x1);
+    const height = Math.abs(y2 - y1);
 
-    let width = Math.abs(x2 - x1);
-    let height = Math.abs(y2 - y1);
-
+    const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
 
-    ctx.drawImage(img, -x1, -y1, img.width, img.height);
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-    let colors = new Set();
-    for (let x = 0; x < width; x += 5) {
-      for (let y = 0; y < height; y += 5) {
-        let pixel = ctx.getImageData(x, y, 1, 1).data;
-        let hexColor = `#${pixel[0].toString(16).padStart(2, "0")}${pixel[1]
-          .toString(16)
-          .padStart(2, "0")}${pixel[2].toString(16).padStart(2, "0")}`;
-        colors.add(hexColor);
-      }
-    }
+    // ✅ drawImage에서 직접 캡쳐된 범위만 그리기
+    ctx.drawImage(
+      img,
+      x1,
+      y1,
+      width,
+      height, // 소스 이미지의 잘라낼 부분
+      0,
+      0,
+      width,
+      height // 캔버스에 그릴 위치
+    );
+
+    const imageDataUrl = canvas.toDataURL("image/png");
 
     chrome.runtime.sendMessage(
       {
         action: "saveExtractedColors",
-        colors: Array.from(colors),
-        image: canvas.toDataURL("image/png"),
+        image: imageDataUrl,
       },
       (response) => {
         if (chrome.runtime.lastError) {
