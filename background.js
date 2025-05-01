@@ -96,22 +96,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "captureScreen") {
-    chrome.permissions.request({ permissions: ["tabs"] }, (granted) => {
-      if (!granted) {
-        console.error("❌ [ERROR] tabs 권한 요청 거부됨.");
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs || tabs.length === 0) {
+        console.error("❌ [ERROR] 활성 탭 없음.");
+        sendResponse({ success: false, error: "활성 탭 없음." });
         return;
       }
 
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (!tabs || tabs.length === 0) {
-          console.error("❌ [ERROR] 활성 탭 없음.");
-          sendResponse({ success: false, error: "활성 탭 없음." });
-          return;
-        }
+      const activeTab = tabs[0];
 
-        let activeTabId = tabs[0].id;
-
-        chrome.tabs.captureVisibleTab(null, { format: "png" }, (imageSrc) => {
+      chrome.tabs.captureVisibleTab(
+        activeTab.windowId,
+        { format: "png" },
+        (imageSrc) => {
           if (chrome.runtime.lastError || !imageSrc) {
             console.error(
               "❌ [ERROR] 화면 캡처 실패:",
@@ -121,16 +118,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return;
           }
 
-          let { x1, y1, x2, y2 } = message.area;
+          const { x1, y1, x2, y2 } = message.area;
 
           chrome.scripting.executeScript(
             {
-              target: { tabId: activeTabId },
-              files: ["content.js"], // 🔹 content.js를 로드해야 extractColorsFromImage를 실행할 수 있음
+              target: { tabId: activeTab.id },
+              files: ["content.js"],
             },
             () => {
               chrome.scripting.executeScript({
-                target: { tabId: activeTabId },
+                target: { tabId: activeTab.id },
                 func: (imageSrc, x1, y1, x2, y2) => {
                   window.extractColorsFromImage(imageSrc, x1, y1, x2, y2);
                 },
@@ -140,8 +137,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           );
 
           sendResponse({ success: true, image: imageSrc });
-        });
-      });
+        }
+      );
     });
 
     return true;
