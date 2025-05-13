@@ -289,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const subId = data.subscriptionId;
 
         const encryptSubscriptionId = await encryptSubId(subId);
-        const subscribePageUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
+        const subscribePageUrl = `https://paletteboxsubscribe.com/cancelSubscription?e=${encodeURIComponent(
           encryptSubscriptionId
         )}`;
 
