@@ -866,14 +866,19 @@ function exportPresetInPopup() {
       return;
     }
 
-    // ✅ 모든 프리셋의 colorNames만 평탄화하여 하나의 객체로 합침
-    const exportData = {};
+    // ✅ 선택된 프리셋 인덱스가 유효한지 확인
+    if (selectedPresetIndex === null || selectedPresetIndex >= presets.length) {
+      alert(chrome.i18n.getMessage("no_selected_preset"));
+      return;
+    }
 
-    presets.forEach((preset) => {
-      const colorNames = preset.colorNames || {};
-      Object.entries(colorNames).forEach(([name, hex]) => {
-        exportData[name] = hex;
-      });
+    const selectedPreset = presets[selectedPresetIndex];
+    const colorNames = selectedPreset.colorNames || {};
+
+    // ✅ 선택한 프리셋의 colorNames만 export
+    const exportData = {};
+    Object.entries(colorNames).forEach(([name, hex]) => {
+      exportData[name] = hex;
     });
 
     const jsonString = JSON.stringify(exportData, null, 2); // 보기 좋게 포맷
@@ -883,8 +888,8 @@ function exportPresetInPopup() {
     chrome.downloads.download(
       {
         url: url,
-        filename: "colors.json",
-        saveAs: true, // ✅ 저장 위치 사용자 지정 가능
+        filename: `${selectedPreset.name || "colors"}.json`,
+        saveAs: true,
       },
       (downloadId) => {
         if (chrome.runtime.lastError) {
