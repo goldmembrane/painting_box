@@ -36,7 +36,7 @@ function checkSubscriptionStatus(email, callback) {
       chrome.storage.sync.set(
         {
           isSubscribed: isSubscribed,
-          subscriptionId: data.subscriptionId,
+          subscriptionId: data.subscription_id,
           userEmail: email,
         },
         () => {
