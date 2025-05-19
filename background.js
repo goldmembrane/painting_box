@@ -31,7 +31,6 @@ function checkSubscriptionStatus(email, callback) {
   fetch(`https://palettebox.net/subscription-status/${email}`)
     .then((res) => res.json())
     .then((data) => {
-      console.log(data);
       let isSubscribed = data.status === "ACTIVE" ? true : false;
       chrome.storage.sync.set(
         {
