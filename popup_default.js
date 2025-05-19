@@ -70,7 +70,7 @@ async function encryptSubId(subId) {
     const res = await fetch(`https://palettebox.net/encrypt-subscription-id`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subId }),
+      body: JSON.stringify({ subscriptionId: subId }),
     });
     const data = await res.json();
     return data.encrypted;
