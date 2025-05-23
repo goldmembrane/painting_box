@@ -378,6 +378,10 @@ function saveNewPreset() {
         return;
       }
 
+      if (!targetPreset.colorNames) {
+        targetPreset.colorNames = {};
+      }
+
       selectedColors.forEach((color) => {
         if (!targetPreset.colors.includes(color)) {
           targetPreset.colors.push(color);
