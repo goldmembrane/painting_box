@@ -213,6 +213,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("newPresetScreen").classList.remove("hidden");
     document.getElementById("navBarMain").classList.add("hidden");
     document.getElementById("navBarNewPreset").classList.remove("hidden");
+    document.getElementById("newPresetName").value = "";
+    document.getElementById("newPresetName").disabled = false;
+    document.getElementById("importPresetName").value = "";
+    document.getElementById("importPresetName").disabled = false;
+    document.getElementById("encryptedCodeInput").value = "";
+    document.getElementById("encryptedCodeInput").disabled = false;
   });
 
   // ✅ 뒤로 가기 버튼 클릭 시 메인 화면으로 전환
@@ -221,6 +227,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("presetContainer").classList.remove("hidden");
     document.getElementById("navBarNewPreset").classList.add("hidden");
     document.getElementById("navBarMain").classList.remove("hidden");
+    document.getElementById("newPresetName").value = "";
+    document.getElementById("importPresetName").value = "";
+    document.getElementById("encryptedCodeInput").value = "";
   });
 
   document.getElementById("addColorBtn").addEventListener("click", () => {
@@ -360,6 +369,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("decodeAndSave").addEventListener("click", () => {
     setTimeout(() => updateInputStates(), 100);
   });
+
+  document.getElementById("backToMain").addEventListener("click", () => {
+    updateInputStates();
+  });
 });
 
 let selectedPresetIndex = null;
@@ -464,6 +477,8 @@ document.getElementById("savePreset").addEventListener("click", () => {
         document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
         alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
       });
+
+      console.log(document.getElementById("newPresetName").value);
     }
   );
 });
@@ -960,9 +975,9 @@ document.getElementById("sendToCode").addEventListener("click", () => {
         }, 500);
       }, 5000);
     } else {
-      chrome.storage.sync.get(["colorPresets"], (data) => {
+      chrome.storage.sync.get(["colorPresets"], async (data) => {
         let preset = data.colorPresets[selectedPresetIndex];
-        let encryptedCode = encryptColorsWithAES(preset);
+        let encryptedCode = await encryptColorsWithAES(preset);
 
         // ✅ 클립보드에 복사
         navigator.clipboard
@@ -1040,6 +1055,7 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
       document.getElementById("presetContainer").classList.remove("hidden");
       document.getElementById("navBarNewPreset").classList.add("hidden");
       document.getElementById("navBarMain").classList.remove("hidden");
+      document.getElementById("newPresetName").value = "";
       document.getElementById("importPresetName").value = "";
       document.getElementById("encryptedCodeInput").value = ""; // 입력 필드 초기화
       alert(
