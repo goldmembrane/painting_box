@@ -198,12 +198,69 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+  // 색상 조합 키워드 옵션 선택 관련
+  const generationMethodSelect = document.getElementById("generation-method");
+  const keywordOptionContainer = document.getElementById(
+    "keyword-option-container"
+  );
+  const presetOptionContainer = document.getElementById(
+    "preset-option-container"
+  );
+  const presetOptionSelect = document.getElementById("preset-option");
+  const generateBtn = document.getElementById("generate-palette-btn");
 
+  console.log(generateBtn.disabled);
+
+  generationMethodSelect.addEventListener("change", () => {
+    const selected = generationMethodSelect.value;
+
+    if (selected === "keyword") {
+      keywordOptionContainer.classList.remove("hidden");
+    } else {
+      keywordOptionContainer.classList.add("hidden");
+    }
+
+    // 프리셋 옵션 처리
+    if (selected === "preset") {
+      presetOptionContainer.classList.remove("hidden");
+      loadPresetOptions();
+    } else {
+      presetOptionContainer.classList.add("hidden");
+    }
+
+    // 버튼 활성화 여부
+    // generateBtn.disabled = selected === "";
+  });
+
+  function loadPresetOptions() {
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+
+      presetOptionSelect.innerHTML = `<option value="">프리셋을 선택하세요</option>`;
+
+      presets.forEach((preset, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = preset.name || `프리셋 ${index + 1}`;
+        presetOptionSelect.appendChild(option);
+      });
+
+      presetOptionSelect.addEventListener("change", () => {
+        const selectedValue = presetOptionSelect.value;
+        selectedPresetIndex =
+          selectedValue === "" ? null : parseInt(selectedValue, 10);
+      });
+    });
+  }
+  // 설정 버튼을 눌렀을 때 화면 및 네비게이션 변경
   document.getElementById("openSettingsBtn").addEventListener("click", () => {
     document.getElementById("presetContainer").classList.add("hidden");
     document.getElementById("settingsScreen").classList.remove("hidden");
     document.getElementById("navBarMain").classList.add("hidden");
     document.getElementById("navBarSetting").classList.remove("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.add("hidden");
     updateSubscriptionUI();
   });
 
@@ -212,6 +269,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("presetContainer").classList.add("hidden");
     document.getElementById("newPresetScreen").classList.remove("hidden");
     document.getElementById("navBarMain").classList.add("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.add("hidden");
     document.getElementById("navBarNewPreset").classList.remove("hidden");
     document.getElementById("newPresetName").value = "";
     document.getElementById("newPresetName").disabled = false;
@@ -225,6 +285,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("backToMain").addEventListener("click", () => {
     document.getElementById("newPresetScreen").classList.add("hidden");
     document.getElementById("presetContainer").classList.remove("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.remove("hidden");
     document.getElementById("navBarNewPreset").classList.add("hidden");
     document.getElementById("navBarMain").classList.remove("hidden");
     document.getElementById("newPresetName").value = "";
@@ -256,6 +319,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("presetContainer").classList.remove("hidden");
       document.getElementById("navBarSetting").classList.add("hidden");
       document.getElementById("navBarMain").classList.remove("hidden");
+      document
+        .getElementById("color-generation-container")
+        .classList.remove("hidden");
     });
 
   const closeBtn = document.getElementById("closeBanner");
@@ -474,6 +540,9 @@ document.getElementById("savePreset").addEventListener("click", () => {
         document.getElementById("presetContainer").classList.remove("hidden");
         document.getElementById("navBarNewPreset").classList.add("hidden");
         document.getElementById("navBarMain").classList.remove("hidden");
+        document
+          .getElementById("color-generation-container")
+          .classList.remove("hidden");
         document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
         alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
       });
@@ -633,6 +702,7 @@ function loadPresets() {
 function showPresetDetails(presetIndex) {
   document.getElementById("navBarMain").classList.add("hidden");
   document.getElementById("navBarDetail").classList.remove("hidden");
+  document.getElementById("color-generation-container").classList.add("hidden");
   chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
     let preset = presets[presetIndex];
@@ -796,6 +866,9 @@ function showPresetList() {
   document.getElementById("presetDetails").classList.add("hidden");
 
   document.getElementById("addColorScreen").classList.add("hidden");
+  document
+    .getElementById("color-generation-container")
+    .classList.remove("hidden");
 
   document.getElementById("newColorName").value = "";
   document.getElementById("colorPicker").value = "#000000";
@@ -849,6 +922,165 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
     });
   });
 });
+
+// 기존 프리셋 기반 색상 조합 추천 함수
+function generateSimilarColorsFromPreset(baseColors) {
+  function hexToHSL(hex) {
+    let r = parseInt(hex.slice(1, 3), 16) / 255;
+    let g = parseInt(hex.slice(3, 5), 16) / 255;
+    let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    let max = Math.max(r, g, b),
+      min = Math.min(r, g, b);
+    let h,
+      s,
+      l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0;
+    } else {
+      let d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g:
+          h = (b - r) / d + 2;
+          break;
+        case b:
+          h = (r - g) / d + 4;
+          break;
+      }
+      h *= 60;
+    }
+    return [h, s * 100, l * 100];
+  }
+
+  function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    let c = (1 - Math.abs(2 * l - 1)) * s;
+    let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    let m = l - c / 2;
+    let r, g, b;
+    if (h < 60) [r, g, b] = [c, x, 0];
+    else if (h < 120) [r, g, b] = [x, c, 0];
+    else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c];
+    else if (h < 300) [r, g, b] = [x, 0, c];
+    else [r, g, b] = [c, 0, x];
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  }
+
+  const result = [];
+  const usedHues = [];
+
+  for (const hex of baseColors) {
+    const [baseH, baseS, baseL] = hexToHSL(hex);
+
+    let h,
+      s,
+      l,
+      tries = 0;
+    do {
+      h = (baseH + (Math.random() * 60 - 30) + 360) % 360;
+      s = Math.max(30, Math.min(100, baseS + (Math.random() * 30 - 15)));
+      l = Math.max(20, Math.min(90, baseL + (Math.random() * 20 - 10)));
+
+      const tooClose = usedHues.some(
+        (existingH) =>
+          Math.abs(existingH - h) < 18 || Math.abs(existingH - h) > 342
+      );
+      tries++;
+      if (!tooClose || tries > 10) break; // 탈출 조건
+    } while (true);
+
+    usedHues.push(h);
+    result.push(hslToHex(h, s, l));
+  }
+
+  return result;
+}
+
+document
+  .getElementById("generate-palette-btn")
+  .addEventListener("click", () => {
+    chrome.storage.sync.get("colorPresets", (data) => {
+      if (!data.colorPresets || selectedPresetIndex === null) {
+        console.log(data);
+        return;
+      }
+
+      const preset = data.colorPresets[selectedPresetIndex];
+      const originalColors = preset.colors || [];
+
+      const recommendedColors = generateSimilarColorsFromPreset(originalColors);
+
+      // 이후 UI에 표시하거나 새 프리셋으로 저장하도록 연결
+      renderGeneratedPalette(
+        "기존 프리셋 기반",
+        "기존 프리셋 기반으로 생성된 색상 조합",
+        recommendedColors
+      );
+    });
+  });
+
+function renderGeneratedPalette(title, subtitle, colors) {
+  const container = document.getElementById("generated-palette-container");
+  container.style.display = "block"; // ✅ 이 시점에만 보이게 함
+  container.innerHTML = ""; // 초기화
+
+  const card = document.createElement("div");
+
+  card.innerHTML = `
+    <div class="palette-title">
+      <span>🎨</span>
+      <span>${title}</span>
+      <span style="font-size:10px; background:#334155; color:#60a5fa; padding: 2px 6px; border-radius: 6px;">Generated</span>
+    </div>
+    <div class="palette-subtitle">${subtitle}</div>
+    <div class="palette-colors">
+      ${colors
+        .map(
+          (hex) =>
+            `<div class="palette-color" style="background-color: ${hex};"></div>`
+        )
+        .join("")}
+    </div>
+    <div class="palette-footer">
+      <span style="font-size: 12px; color: #94a3b8;">${
+        colors.length
+      } colors</span>
+      <div class="buttons">
+        <button class="save-btn">💾 저장</button>
+        <button class="detail-btn">상세보기</button>
+        <button class="close-btn">✕</button>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(card);
+
+  // 닫기 버튼 이벤트
+  card.querySelector(".close-btn").addEventListener("click", () => {
+    container.innerHTML = "";
+  });
+
+  // 저장 버튼 이벤트 (선택적으로 구현)
+  card.querySelector(".save-btn").addEventListener("click", () => {
+    // 저장 로직 연동
+    alert("🔐 저장 기능 연결 필요");
+  });
+
+  // 상세보기 버튼 이벤트 (선택적으로 구현)
+  card.querySelector(".detail-btn").addEventListener("click", () => {
+    alert("🔍 상세보기 기능 연결 필요");
+  });
+}
 
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
 async function encryptColorsWithAES(preset) {

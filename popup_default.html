@@ -10,9 +10,6 @@
         margin: 0;
         padding: 0;
       }
-      .hidden {
-        display: none;
-      }
       .empty {
         height: 10px;
         width: 50px;
@@ -325,9 +322,6 @@
         flex-wrap: wrap;
         gap: 5px;
       }
-      .hidden {
-        display: none;
-      }
       .color-item {
         display: flex;
         align-items: center;
@@ -483,6 +477,144 @@
       #backToDetail {
         padding: 8px 16px;
       }
+      /* 색상 조합 컨테이너 css*/
+      .color-gen-container {
+        padding: 16px;
+        border-bottom: 1px solid #ddd;
+        font-family: sans-serif;
+      }
+
+      .color-gen-inner {
+        margin-bottom: 12px;
+      }
+
+      .color-gen-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .color-gen-icon {
+        width: 16px;
+        height: 16px;
+        color: #3b82f6;
+      }
+
+      .color-gen-title {
+        font-size: 14px;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      .color-gen-block {
+        margin-bottom: 12px;
+      }
+
+      .color-gen-label {
+        font-size: 12px;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .color-gen-select {
+        width: 100%;
+        height: 32px;
+        font-size: 12px;
+        padding: 4px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .color-gen-button {
+        width: 100%;
+        height: 32px;
+        font-size: 12px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .hidden {
+        display: none;
+      }
+      /* 생성된 색상 조합 container css */
+      .generated-palette-container {
+        margin-top: 16px;
+        background-color: #0f172a;
+        padding: 16px;
+        border-radius: 8px;
+        color: white;
+        font-family: sans-serif;
+      }
+
+      .palette-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .palette-subtitle {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+        margin-bottom: 8px;
+      }
+
+      .palette-colors {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
+      .palette-color {
+        flex: 1;
+        height: 32px;
+        border-radius: 4px;
+      }
+
+      .palette-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .palette-footer .buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .palette-footer button {
+        font-size: 12px;
+        padding: 4px 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .palette-footer .save-btn {
+        background-color: #3b82f6;
+        color: white;
+      }
+
+      .palette-footer .detail-btn {
+        background-color: #1e293b;
+        color: white;
+        border: 1px solid #334155;
+      }
+
+      .palette-footer .close-btn {
+        background: none;
+        color: #64748b;
+        font-size: 16px;
+      }
+      #generated-palette-container {
+        display: none; /* 처음엔 숨김 */
+      }
     </style>
   </head>
   <body>
@@ -511,6 +643,81 @@
         <div class="empty"></div>
       </div>
 
+      <!-- 색상 조합 container -->
+      <div id="color-generation-container" class="color-gen-container">
+        <div class="color-gen-inner">
+          <div class="color-gen-header">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="h-4 w-4"
+              style="color: #3b82f6"
+            >
+              <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+              <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+              <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+              <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+            </svg>
+            <h3 class="color-gen-title">색상 조합 생성</h3>
+          </div>
+
+          <div class="color-gen-block">
+            <label for="generation-method" class="color-gen-label"
+              >생성 방식
+            </label>
+            <select id="generation-method" class="color-gen-select">
+              <option value="">방식을 선택하세요</option>
+              <option value="preset">기존 프리셋 기반</option>
+              <option value="keyword">키워드</option>
+              <option value="ui">UI 디자인</option>
+            </select>
+          </div>
+
+          <div id="preset-option-container" class="color-gen-block hidden">
+            <label for="preset-option" class="color-gen-label"
+              >기준 프리셋 선택</label
+            >
+            <select id="preset-option" class="color-gen-select">
+              <option value="">프리셋을 선택하세요</option>
+            </select>
+          </div>
+
+          <div id="keyword-option-container" class="color-gen-block hidden">
+            <label for="keyword-option" class="color-gen-label">키워드</label>
+            <select id="keyword-option" class="color-gen-select">
+              <option value="">키워드를 선택하세요</option>
+              <option value="nature">자연</option>
+              <option value="city">도시</option>
+              <option value="food">음식</option>
+              <option value="emotion">감정</option>
+              <option value="season">계절</option>
+              <option value="vintage">빈티지</option>
+              <option value="modern">모던</option>
+              <option value="warm">따뜻함</option>
+              <option value="cool">시원함</option>
+              <option value="bright">밝음</option>
+            </select>
+          </div>
+
+          <button id="generate-palette-btn" class="color-gen-button">
+            팔레트 생성
+          </button>
+        </div>
+      </div>
+
+      <div
+        id="generated-palette-container"
+        class="generated-palette-container"
+      ></div>
+
+      <!-- 저장된 프리셋 container -->
       <div id="presetContainer">
         <h2 id="saved_presets">__MSG_saved_presets__</h2>
         <div id="presetList"></div>
@@ -568,6 +775,7 @@
         </div>
       </div>
 
+      <!-- 프리셋 상세 화면 -->
       <div id="navBarDetail" class="navBar hidden">
         <button id="backToMainPage" class="back-btn">←</button>
         <span id="presetDetailTitle">__MSG_preset_detail__</span>
