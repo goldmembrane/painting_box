@@ -1011,7 +1011,6 @@ document
   .addEventListener("click", () => {
     chrome.storage.sync.get("colorPresets", (data) => {
       if (!data.colorPresets || selectedPresetIndex === null) {
-        console.log(data);
         return;
       }
 
@@ -1057,7 +1056,6 @@ function renderGeneratedPalette(title, subtitle, colors) {
       } colors</span>
       <div class="buttons">
         <button class="save-btn">💾 저장</button>
-        <button class="detail-btn">상세보기</button>
         <button class="close-btn">✕</button>
       </div>
     </div>
@@ -1072,13 +1070,26 @@ function renderGeneratedPalette(title, subtitle, colors) {
 
   // 저장 버튼 이벤트 (선택적으로 구현)
   card.querySelector(".save-btn").addEventListener("click", () => {
-    // 저장 로직 연동
-    alert("🔐 저장 기능 연결 필요");
-  });
+    let invertedColorNames = {};
+    Object.entries(colors).forEach(([index, hex]) => {
+      invertedColorNames[hex] = hex;
+    });
+    let newPreset = {
+      id: Date.now(),
+      name: title,
+      colors: colors,
+      colorNames: invertedColorNames,
+    };
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+      presets.push(newPreset);
 
-  // 상세보기 버튼 이벤트 (선택적으로 구현)
-  card.querySelector(".detail-btn").addEventListener("click", () => {
-    alert("🔍 상세보기 기능 연결 필요");
+      chrome.storage.sync.set({ colorPresets: presets }, () => {
+        loadPresets();
+        alert("✅ 팔레트가 프리셋으로 저장되었습니다.");
+        container.innerHTML = "";
+      });
+    });
   });
 }
 
