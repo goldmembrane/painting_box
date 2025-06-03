@@ -9,6 +9,8 @@ document.head.appendChild(script);
 // ✅ 구독 배너 보여주기 여부
 const subscriptionBanner = document.getElementById("subscriptionBanner");
 
+let selectedKeyword = "";
+
 // ✅ popup_default.js에서 구독 상태 요청
 function fetchSubscriptionStatusFromBackground() {
   chrome.runtime.sendMessage(
@@ -209,8 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const presetOptionSelect = document.getElementById("preset-option");
   const generateBtn = document.getElementById("generate-palette-btn");
 
-  console.log(generateBtn.disabled);
-
   generationMethodSelect.addEventListener("change", () => {
     const selected = generationMethodSelect.value;
 
@@ -227,9 +227,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       presetOptionContainer.classList.add("hidden");
     }
-
-    // 버튼 활성화 여부
-    // generateBtn.disabled = selected === "";
   });
 
   function loadPresetOptions() {
@@ -252,6 +249,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  const keywordSelect = document.getElementById("keyword-option");
+
+  keywordSelect.addEventListener("change", () => {
+    selectedKeyword = keywordSelect.value;
+
+    const generateBtn = document.getElementById("generate-palette-btn");
+    console.log(generateBtn.disabled);
+  });
   // 설정 버튼을 눌렀을 때 화면 및 네비게이션 변경
   document.getElementById("openSettingsBtn").addEventListener("click", () => {
     document.getElementById("presetContainer").classList.add("hidden");
@@ -923,59 +929,60 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
   });
 });
 
+// 색상 추천 조합 보조 함수
+function hexToHSL(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  let max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  let c = (1 - Math.abs(2 * l - 1)) * s;
+  let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  let m = l - c / 2;
+  let r, g, b;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
 // 기존 프리셋 기반 색상 조합 추천 함수
 function generateSimilarColorsFromPreset(baseColors) {
-  function hexToHSL(hex) {
-    let r = parseInt(hex.slice(1, 3), 16) / 255;
-    let g = parseInt(hex.slice(3, 5), 16) / 255;
-    let b = parseInt(hex.slice(5, 7), 16) / 255;
-
-    let max = Math.max(r, g, b),
-      min = Math.min(r, g, b);
-    let h,
-      s,
-      l = (max + min) / 2;
-
-    if (max === min) {
-      h = s = 0;
-    } else {
-      let d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r:
-          h = (g - b) / d + (g < b ? 6 : 0);
-          break;
-        case g:
-          h = (b - r) / d + 2;
-          break;
-        case b:
-          h = (r - g) / d + 4;
-          break;
-      }
-      h *= 60;
-    }
-    return [h, s * 100, l * 100];
-  }
-
-  function hslToHex(h, s, l) {
-    s /= 100;
-    l /= 100;
-    let c = (1 - Math.abs(2 * l - 1)) * s;
-    let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-    let m = l - c / 2;
-    let r, g, b;
-    if (h < 60) [r, g, b] = [c, x, 0];
-    else if (h < 120) [r, g, b] = [x, c, 0];
-    else if (h < 180) [r, g, b] = [0, c, x];
-    else if (h < 240) [r, g, b] = [0, x, c];
-    else if (h < 300) [r, g, b] = [x, 0, c];
-    else [r, g, b] = [c, 0, x];
-    r = Math.round((r + m) * 255);
-    g = Math.round((g + m) * 255);
-    b = Math.round((b + m) * 255);
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  }
-
   const result = [];
   const usedHues = [];
 
@@ -1006,25 +1013,374 @@ function generateSimilarColorsFromPreset(baseColors) {
   return result;
 }
 
+// 키워드 기반 추천 함수
+
+const keywordColorProfiles = {
+  spring: {
+    hueGroups: [
+      [40, 60],
+      [330, 360],
+      [300, 320],
+      [130, 160],
+    ],
+    satRange: [30, 70],
+    lightRange: [60, 80],
+    options: {
+      excludeColors: ["brown"],
+      distinctHuesOnly: true,
+    },
+  },
+  summer: {
+    hueGroups: [
+      [180, 220],
+      [100, 130],
+    ],
+    satRange: [40, 80],
+    lightRange: [60, 80],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  autumn: {
+    hueGroups: [
+      [20, 40],
+      [10, 30],
+      [0, 10],
+      [340, 360],
+    ],
+    satRange: [40, 70],
+    lightRange: [50, 70],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  winter: {
+    hueGroups: [
+      [210, 240],
+      [200, 220],
+    ],
+    satRange: [30, 60],
+    lightRange: [70, 90],
+    options: {
+      excludeColors: ["green"],
+      includePastel: true,
+      distinctHuesOnly: true,
+    },
+  },
+  nature: {
+    hueGroups: [
+      [100, 140],
+      [190, 210],
+    ],
+    satRange: [40, 80],
+    lightRange: [30, 60],
+    options: {
+      pickOneGroupOnly: true,
+      distinctHuesOnly: true,
+    },
+  },
+  city: {
+    hueGroups: [
+      [200, 240],
+      [0, 0],
+    ],
+    satRange: [0, 20],
+    lightRange: [20, 60],
+    options: {
+      excludePureColors: true,
+      distinctHuesOnly: true,
+    },
+  },
+  food: {
+    hueGroups: [
+      [10, 30],
+      [0, 10],
+      [40, 60],
+      [100, 120],
+    ],
+    satRange: [50, 100],
+    lightRange: [40, 70],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  emotion: {
+    hueGroups: [
+      [250, 280],
+      [200, 220],
+      [0, 10],
+    ],
+    satRange: [10, 60],
+    lightRange: [30, 70],
+    options: {
+      includeGray: true,
+      distinctHuesOnly: true,
+    },
+  },
+  modern: {
+    hueGroups: [
+      [210, 240],
+      [0, 0],
+    ],
+    satRange: [0, 25],
+    lightRange: [20, 70],
+    options: {
+      includeGray: true,
+      distinctHuesOnly: true,
+    },
+  },
+  vintage: {
+    hueGroups: [
+      [30, 50],
+      [10, 20],
+    ],
+    satRange: [20, 60],
+    lightRange: [40, 70],
+    options: {
+      distinctHuesOnly: true,
+      excludePureColors: true,
+    },
+  },
+  warm: {
+    hueGroups: [[0, 40]],
+    satRange: [30, 60],
+    lightRange: [50, 75],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  cool: {
+    hueGroups: [
+      [180, 200],
+      [120, 150],
+    ],
+    satRange: [40, 70],
+    lightRange: [60, 80],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  bright: {
+    hueGroups: [
+      [50, 80],
+      [300, 340],
+      [100, 140],
+    ],
+    satRange: [30, 60],
+    lightRange: [75, 95],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  dark: {
+    hueGroups: [
+      [240, 260],
+      [0, 10],
+      [30, 50],
+    ],
+    satRange: [10, 40],
+    lightRange: [10, 30],
+    options: {
+      includeBlack: true,
+      distinctHuesOnly: true,
+    },
+  },
+  calm: {
+    hueGroups: [
+      [160, 200],
+      [20, 40],
+    ],
+    satRange: [10, 30],
+    lightRange: [60, 85],
+    options: {
+      excludeColors: ["brown"],
+      distinctHuesOnly: true,
+    },
+  },
+  dynamic: {
+    hueGroups: [
+      [0, 20],
+      [30, 50],
+      [160, 180],
+    ],
+    satRange: [70, 100],
+    lightRange: [40, 60],
+    options: {
+      includeBlack: true,
+      preferComplementary: true,
+      distinctHuesOnly: true,
+    },
+  },
+};
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function hslToHexKeyword(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r, g, b;
+
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+
+  const to255 = (n) => Math.round((n + m) * 255);
+  return `#${[r, g, b]
+    .map(to255)
+    .map((v) => v.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function isDistinctHue(h, usedHues) {
+  return usedHues.every((uh) => Math.abs(uh - h) > 10);
+}
+
+function isBrown(h, s, l) {
+  return h >= 20 && h <= 45 && s >= 30 && s <= 60 && l >= 30 && l <= 55;
+}
+
+// 키워드 기반 색상 조합 함수
+function getBaseColorFromKeyword(keyword, count = 5) {
+  const profile = keywordColorProfiles[keyword];
+  if (!profile) return [];
+
+  const {
+    hueGroups = [],
+    satRange = [50, 100],
+    lightRange = [50, 70],
+    options = {},
+  } = profile;
+
+  const results = new Set();
+  const usedHues = [];
+
+  const targetHueGroups = options.pickOneGroupOnly
+    ? [hueGroups[Math.floor(Math.random() * hueGroups.length)]]
+    : hueGroups;
+
+  let attempts = 0;
+  const maxAttempts = 1000;
+
+  // 조건 기반 특수 색상 삽입
+  if (options.includeGray && results.size < count) {
+    results.add(hslToHex(0, 0, randomInRange(40, 70)));
+  }
+
+  if (options.includeBlack && results.size < count) {
+    results.add(hslToHex(0, 0, randomInRange(5, 15)));
+  }
+
+  if (options.includePastel && results.size < count) {
+    const [hMin, hMax] =
+      targetHueGroups[Math.floor(Math.random() * targetHueGroups.length)];
+    const pastelHue = Math.floor(randomInRange(hMin, hMax));
+    results.add(
+      hslToHex(pastelHue, randomInRange(10, 30), randomInRange(80, 90))
+    );
+  }
+
+  while (results.size < count && attempts < maxAttempts) {
+    attempts++;
+
+    const [hMin, hMax] =
+      targetHueGroups[Math.floor(Math.random() * targetHueGroups.length)];
+    const h = Math.floor(randomInRange(hMin, hMax));
+    const s = Math.floor(randomInRange(...satRange));
+    const l = Math.floor(randomInRange(...lightRange));
+
+    if (options.distinctHuesOnly && !isDistinctHue(h, usedHues)) continue;
+    if (options.excludePureColors && s > 80) continue;
+    if (options.excludeColors?.includes("brown") && isBrown(h, s, l)) continue;
+
+    const hex = hslToHex(h, s, l);
+    if (!results.has(hex)) {
+      usedHues.push(h);
+      results.add(hex);
+    }
+
+    // 보색 전략: 조건 만족 + 공간 남으면 보색도 넣음
+    if (
+      options.preferComplementary &&
+      results.size < count &&
+      Math.random() < 0.5
+    ) {
+      const compHue = (h + 180) % 360;
+      const compHex = hslToHex(compHue, s, l);
+      if (
+        (!options.distinctHuesOnly || isDistinctHue(compHue, usedHues)) &&
+        !results.has(compHex)
+      ) {
+        usedHues.push(compHue);
+        results.add(compHex);
+      }
+    }
+  }
+
+  // 실패 시 백업: 무작위 색으로 채움
+  while (results.size < count) {
+    results.add(
+      hslToHex(
+        Math.floor(Math.random() * 360),
+        Math.floor(randomInRange(30, 80)),
+        Math.floor(randomInRange(30, 80))
+      )
+    );
+  }
+
+  return Array.from(results).slice(0, count);
+}
+
 document
   .getElementById("generate-palette-btn")
   .addEventListener("click", () => {
     chrome.storage.sync.get("colorPresets", (data) => {
-      if (!data.colorPresets || selectedPresetIndex === null) {
-        return;
+      const generationMethodSelect =
+        document.getElementById("generation-method");
+      const selected = generationMethodSelect.value;
+
+      if (selected === "preset") {
+        if (!data.colorPresets || selectedPresetIndex === null) {
+          return;
+        }
+
+        const preset = data.colorPresets[selectedPresetIndex];
+        const originalColors = preset.colors || [];
+
+        const recommendedColors =
+          generateSimilarColorsFromPreset(originalColors);
+
+        // 이후 UI에 표시하거나 새 프리셋으로 저장하도록 연결
+        renderGeneratedPalette(
+          "기존 프리셋 기반",
+          "기존 프리셋 기반으로 생성된 색상 조합",
+          recommendedColors
+        );
+      } else if (selected === "keyword") {
+        const colorCountInput = document.getElementById("color-count-input");
+
+        if (colorCountInput === "") {
+          alert("원하는 색상 개수를 입력해주세요.");
+        }
+
+        const keywordColors = getBaseColorFromKeyword(
+          selectedKeyword,
+          parseInt(colorCountInput.value)
+        );
+
+        renderGeneratedPalette(
+          "키워드 기반",
+          "키워드 기반으로 생성된 색상 조합",
+          keywordColors
+        );
       }
-
-      const preset = data.colorPresets[selectedPresetIndex];
-      const originalColors = preset.colors || [];
-
-      const recommendedColors = generateSimilarColorsFromPreset(originalColors);
-
-      // 이후 UI에 표시하거나 새 프리셋으로 저장하도록 연결
-      renderGeneratedPalette(
-        "기존 프리셋 기반",
-        "기존 프리셋 기반으로 생성된 색상 조합",
-        recommendedColors
-      );
     });
   });
 
