@@ -698,13 +698,31 @@
               <option value="city">도시</option>
               <option value="food">음식</option>
               <option value="emotion">감정</option>
-              <option value="season">계절</option>
+              <option value="spring">봄</option>
+              <option value="summer">여름</option>
+              <option value="autumn">가을</option>
+              <option value="winter">겨울</option>
               <option value="vintage">빈티지</option>
               <option value="modern">모던</option>
               <option value="warm">따뜻함</option>
               <option value="cool">시원함</option>
               <option value="bright">밝음</option>
+              <option value="dark">어두움</option>
+              <option value="calm">잔잔함</option>
+              <option value="dynamic">역동적인</option>
             </select>
+
+            <label for="color-count-input" class="color-gen-label"
+              >색상 개수</label
+            >
+            <input
+              id="color-count-input"
+              class="color-gen-select"
+              type="number"
+              min="2"
+              max="10"
+              value="5"
+            />
           </div>
 
           <button id="generate-palette-btn" class="color-gen-button">
