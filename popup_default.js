@@ -82,9 +82,129 @@ async function encryptSubId(subId) {
   }
 }
 
+// 오늘의 색상 추천 조합 관련 함수
+function hslToRgb(h, s, l) {
+  h /= 360;
+  s /= 100;
+  l /= 100;
+
+  let r, g, b;
+
+  if (s === 0) {
+    r = g = b = l; // 무채색
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function colorDistance([r1, g1, b1], [r2, g2, b2]) {
+  return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+}
+
+function generateDistinctPalette(seed, count = 5, previousHexes = []) {
+  const hash = [...seed].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const palette = [];
+  const prevRgb = previousHexes.map(hexToRgb);
+
+  let i = 0;
+  let attempts = 0;
+  while (palette.length < count && attempts < 500) {
+    const hue = (hash + i * 47 + Math.floor(Math.random() * 50)) % 360;
+    const saturation = 50 + Math.floor(Math.random() * 40); // 50~90%
+    const lightness = 40 + Math.floor(Math.random() * 20); // 40~60%
+    const rgb = hslToRgb(hue, saturation, lightness);
+    const hex = rgbToHex(rgb);
+
+    // 다른 색들과 비교
+    const isSimilar = [...palette, ...prevRgb].some((existing) => {
+      const existingRgb =
+        typeof existing === "string" ? hexToRgb(existing) : existing;
+      return colorDistance(existingRgb, rgb) < 50;
+    });
+
+    if (!isSimilar) {
+      palette.push(hex);
+    }
+
+    i++;
+    attempts++;
+  }
+
+  return palette;
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+  const bigint = parseInt(hex, 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+function rgbToHex([r, g, b]) {
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function showTodayPalette() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const randomSeed = new Date().toISOString(); // 매번 달라짐
+
+  chrome.storage.local.get(
+    ["suppressTodayBanner", "lastTodayColors"],
+    (data) => {
+      if (data.suppressTodayBanner === todayKey) return;
+
+      const banner = document.getElementById("today-palette-banner");
+      const container = document.getElementById("today-colors");
+
+      const previousColors = data.lastTodayColors || [];
+      const palette = generateDistinctPalette(randomSeed, 5, previousColors);
+
+      // 저장
+      chrome.storage.local.set({ lastTodayColors: palette });
+
+      container.innerHTML = "";
+      palette.forEach((hex) => {
+        const swatch = document.createElement("div");
+        swatch.style.backgroundColor = hex;
+        container.appendChild(swatch);
+      });
+
+      banner.classList.remove("hidden");
+
+      document
+        .getElementById("close-today-banner")
+        .addEventListener("click", () => {
+          const suppress = document.getElementById(
+            "suppressTodayBanner"
+          ).checked;
+          if (suppress) {
+            chrome.storage.local.set({ suppressTodayBanner: todayKey });
+          }
+          banner.classList.add("hidden");
+        });
+    }
+  );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
   fetchSubscriptionStatusFromBackground();
+  showTodayPalette();
   document
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
@@ -200,6 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
   // 색상 조합 키워드 옵션 선택 관련
   const generationMethodSelect = document.getElementById("generation-method");
   const keywordOptionContainer = document.getElementById(
@@ -623,6 +744,8 @@ function applyDarkMode() {
     document.querySelectorAll("option").forEach((option) => {
       option.classList.add("dark-mode-option");
     });
+    document.getElementById("today-palette").classList.add("dark-mode");
+    document.getElementById("today-title").classList.add("dark-mode");
   } else {
     footer.classList.remove("dark-mode-footer");
     document.querySelectorAll("textarea").forEach((textarea) => {
@@ -640,6 +763,8 @@ function applyDarkMode() {
     document.querySelectorAll("option").forEach((option) => {
       option.classList.remove("dark-mode-option");
     });
+    document.getElementById("today-palette").classList.remove("dark-mode");
+    document.getElementById("today-title").classList.remove("dark-mode");
   }
 
   // ✅ 설정 화면 버튼에도 다크모드 적용
@@ -1697,6 +1822,49 @@ function renderGeneratedPalette(title, subtitle, colors) {
     });
   });
 }
+
+// 오늘의 랜덤 추천 색상 조합을 프리셋에 저장하는 함수
+function saveTodayPaletteAsPreset() {
+  chrome.storage.local.get("lastTodayColors", (localData) => {
+    const banner = document.getElementById("today-palette-banner");
+    const todayColors = localData.lastTodayColors;
+
+    if (!todayColors || todayColors.length === 0) {
+      alert("❌ 저장할 오늘의 색상 정보가 없습니다.");
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const presetName = `오늘의 추천 팔레트 (${timestamp})`;
+
+    const colorNames = {};
+    todayColors.forEach((hex) => {
+      colorNames[hex] = hex; // 이름 없이 색상 값 그대로 사용
+    });
+
+    const newPreset = {
+      id: timestamp,
+      name: presetName,
+      colors: todayColors,
+      colorNames: colorNames,
+    };
+
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+      presets.push(newPreset);
+
+      chrome.storage.sync.set({ colorPresets: presets }, () => {
+        alert("✅ 오늘의 색상이 프리셋으로 저장되었습니다.");
+        banner.classList.add("hidden");
+        loadPresets();
+      });
+    });
+  });
+}
+
+document
+  .getElementById("today-save-btn")
+  .addEventListener("click", saveTodayPaletteAsPreset);
 
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
 async function encryptColorsWithAES(preset) {
