@@ -44,7 +44,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["popup.html", "config.json"],
+      "resources": ["popup.html", "config.json", "images/cursor_custom.png"],
       "matches": ["<all_urls>"]
     }
   ]
