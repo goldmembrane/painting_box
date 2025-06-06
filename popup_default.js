@@ -208,6 +208,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const presetOptionContainer = document.getElementById(
     "preset-option-container"
   );
+
+  const uiOptionContainer = document.getElementById("color-picker-container");
   const presetOptionSelect = document.getElementById("preset-option");
   const generateBtn = document.getElementById("generate-palette-btn");
 
@@ -218,6 +220,12 @@ document.addEventListener("DOMContentLoaded", () => {
       keywordOptionContainer.classList.remove("hidden");
     } else {
       keywordOptionContainer.classList.add("hidden");
+    }
+
+    if (selected === "ui") {
+      uiOptionContainer.classList.remove("hidden");
+    } else {
+      uiOptionContainer.classList.add("hidden");
     }
 
     // 프리셋 옵션 처리
@@ -254,10 +262,138 @@ document.addEventListener("DOMContentLoaded", () => {
 
   keywordSelect.addEventListener("change", () => {
     selectedKeyword = keywordSelect.value;
-
-    const generateBtn = document.getElementById("generate-palette-btn");
-    console.log(generateBtn.disabled);
   });
+
+  // ui 디자인 색상 추천 조합용 기준 색상 선택 ui 관련 로직
+
+  const colorWheelCanvas = document.getElementById("colorWheelCanvas");
+
+  // 색상 선택시에만 마우스 커서가 변하도록 하는 로직
+  colorWheelCanvas.addEventListener("mouseenter", () => {
+    colorWheelCanvas.style.cursor =
+      "url('./images/cursor_custom.png') 0 0, auto";
+  });
+
+  colorWheelCanvas.addEventListener("mouseleave", () => {
+    colorWheelCanvas.style.cursor = "default";
+  });
+  const ctx = colorWheelCanvas.getContext("2d");
+  const brightnessSlider = document.getElementById("brightnessSlider");
+  const colorPreview = document.getElementById("colorPreview");
+
+  let selectedHue = 0;
+  let selectedSaturation = 100;
+  let selectedBrightness = 50;
+
+  function drawColorWheel(radius = 100) {
+    const image = ctx.createImageData(radius * 2, radius * 2);
+
+    for (let y = -radius; y < radius; y++) {
+      for (let x = -radius; x < radius; x++) {
+        const dx = x;
+        const dy = y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > radius) continue;
+
+        const angle = Math.atan2(dy, dx);
+        let hue = (angle * 180) / Math.PI;
+        if (hue < 0) hue += 360; // ✅ hue 값을 0~360도로 보정
+
+        const sat = (d / radius) * 100;
+        const [r, g, b] = hslToRgb(hue, sat, 50); // lightness 50% 기준
+
+        const px = x + radius;
+        const py = y + radius;
+        const idx = (py * radius * 2 + px) * 4;
+
+        image.data[idx] = r;
+        image.data[idx + 1] = g;
+        image.data[idx + 2] = b;
+        image.data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(image, 0, 0);
+  }
+
+  // HSL → RGB 변환
+  function hslToRgb(h, s, l) {
+    h = h / 360;
+    s = s / 100;
+    l = l / 100;
+
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l; // 무채색
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
+  // 색상 선택 시
+  colorWheelCanvas.addEventListener("click", (e) => {
+    const rect = colorWheelCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const dx = x - 100;
+    const dy = y - 100;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > 100) return;
+
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    const hue = (angle + 360) % 360;
+    const saturation = (distance / 100) * 100;
+
+    selectedHue = hue;
+    selectedSaturation = saturation;
+
+    updateColorPreview();
+  });
+
+  // 명도 조절
+  brightnessSlider.addEventListener("input", () => {
+    selectedBrightness = parseInt(brightnessSlider.value, 10);
+    updateColorPreview();
+  });
+
+  // 미리보기 업데이트
+  function updateColorPreview() {
+    const [r, g, b] = hslToRgb(
+      selectedHue,
+      selectedSaturation,
+      selectedBrightness
+    );
+    const hex = `#${[r, g, b]
+      .map((v) => Math.round(v).toString(16).padStart(2, "0"))
+      .join("")}`;
+
+    colorPreview.style.backgroundColor = hex;
+    window.selectedUiBaseColor = hex; // 다른 로직에서 사용 가능
+  }
+
+  drawColorWheel(); // 초기 렌더링
+  brightnessSlider.value = 50; // ✅ UI 슬라이더 값도 50으로 설정
+  updateColorPreview(); // ✅ 초기 색상 미리보기 반영
+
   // 설정 버튼을 눌렀을 때 화면 및 네비게이션 변경
   document.getElementById("openSettingsBtn").addEventListener("click", () => {
     document.getElementById("presetContainer").classList.add("hidden");
@@ -1338,6 +1474,79 @@ function getBaseColorFromKeyword(keyword, count = 5) {
   return Array.from(results).slice(0, count);
 }
 
+// ui 디자인용 색 조합 추천 함수
+function hexToHslUI(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function hslToHexUI(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let r, g, b;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+
+  return (
+    "#" +
+    [r, g, b]
+      .map((v) =>
+        Math.round((v + m) * 255)
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("")
+  );
+}
+
+function generateTonePalette(baseHex, count = 20) {
+  const [h, s, l] = hexToHslUI(baseHex);
+  const palette = [];
+
+  for (let i = 0; i < count; i++) {
+    const lightness = 95 - (90 / (count - 1)) * i;
+    palette.push(hslToHexUI(h, s, lightness));
+  }
+
+  return palette;
+}
+
 document
   .getElementById("generate-palette-btn")
   .addEventListener("click", () => {
@@ -1379,6 +1588,16 @@ document
           "키워드 기반",
           "키워드 기반으로 생성된 색상 조합",
           keywordColors
+        );
+      } else if (selected === "ui") {
+        const selectedColor = window.selectedUiBaseColor;
+
+        const uiColors = generateTonePalette(selectedColor);
+
+        renderGeneratedPalette(
+          "UI 디자인 추천",
+          "UI 디자인 추천을 위한 색상 조합",
+          uiColors
         );
       }
     });

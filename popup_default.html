@@ -613,6 +613,32 @@
         color: #64748b;
         font-size: 16px;
       }
+      /* ui 색상 조합 기준 색 선택 관련 css */
+      .color-picker-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      #colorWheelCanvas {
+        cursor: default;
+      }
+
+      .brightness-slider input {
+        width: 180px;
+      }
+
+      .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 1px solid #ccc;
+      }
+
+      .hidden {
+        display: none;
+      }
       #generated-palette-container {
         display: none; /* 처음엔 숨김 */
       }
@@ -723,6 +749,25 @@
               max="10"
               value="5"
             />
+          </div>
+
+          <div
+            class="color-picker-container hidden"
+            id="color-picker-container"
+          >
+            <canvas id="colorWheelCanvas" width="200" height="200"></canvas>
+
+            <div class="brightness-slider">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value="50"
+                id="brightnessSlider"
+              />
+            </div>
+
+            <div class="color-preview" id="colorPreview"></div>
           </div>
 
           <button id="generate-palette-btn" class="color-gen-button">
