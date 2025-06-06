@@ -211,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const uiOptionContainer = document.getElementById("color-picker-container");
   const presetOptionSelect = document.getElementById("preset-option");
-  const generateBtn = document.getElementById("generate-palette-btn");
 
   generationMethodSelect.addEventListener("change", () => {
     const selected = generationMethodSelect.value;
@@ -403,6 +402,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document
       .getElementById("color-generation-container")
       .classList.add("hidden");
+    document.getElementById("generated-palette-container").style.display =
+      "none";
+    document.getElementById("generation-method").value = "";
+    document.getElementById("preset-option-container").classList.add("hidden");
+    document.getElementById("keyword-option-container").classList.add("hidden");
+    document.getElementById("preset-option").value = "";
+    document.getElementById("keyword-option").value = "";
     updateSubscriptionUI();
   });
 
@@ -421,6 +427,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("importPresetName").disabled = false;
     document.getElementById("encryptedCodeInput").value = "";
     document.getElementById("encryptedCodeInput").disabled = false;
+    document.getElementById("generated-palette-container").style.display =
+      "none";
+    document.getElementById("generation-method").value = "";
+    document.getElementById("preset-option-container").classList.add("hidden");
+    document.getElementById("keyword-option-container").classList.add("hidden");
+    document.getElementById("preset-option").value = "";
+    document.getElementById("keyword-option").value = "";
   });
 
   // ✅ 뒤로 가기 버튼 클릭 시 메인 화면으로 전환
@@ -600,6 +613,16 @@ function applyDarkMode() {
     document.querySelectorAll("input").forEach((input) => {
       input.classList.add("dark-mode-input");
     });
+    document
+      .getElementById("generated-palette-container")
+      .classList.add("dark-mode");
+
+    document.querySelectorAll("select").forEach((select) => {
+      select.classList.add("dark-mode-select");
+    });
+    document.querySelectorAll("option").forEach((option) => {
+      option.classList.add("dark-mode-option");
+    });
   } else {
     footer.classList.remove("dark-mode-footer");
     document.querySelectorAll("textarea").forEach((textarea) => {
@@ -607,6 +630,15 @@ function applyDarkMode() {
     });
     document.querySelectorAll("input").forEach((input) => {
       input.classList.remove("dark-mode-input");
+    });
+    document
+      .getElementById("generated-palette-container")
+      .classList.remove("dark-mode");
+    document.querySelectorAll("select").forEach((select) => {
+      select.classList.remove("dark-mode-select");
+    });
+    document.querySelectorAll("option").forEach((option) => {
+      option.classList.remove("dark-mode-option");
     });
   }
 
@@ -688,8 +720,6 @@ document.getElementById("savePreset").addEventListener("click", () => {
         document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
         alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
       });
-
-      console.log(document.getElementById("newPresetName").value);
     }
   );
 });

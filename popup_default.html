@@ -549,6 +549,11 @@
         font-family: sans-serif;
       }
 
+      .dark-mode .generated-palette-container {
+        background-color: #3c3c3c;
+        color: white;
+      }
+
       .palette-title {
         display: flex;
         align-items: center;
@@ -602,6 +607,10 @@
         color: white;
       }
 
+      .dark-mode .palette-footer .save-btn {
+        background: #888;
+      }
+
       .palette-footer .detail-btn {
         background-color: #1e293b;
         color: white;
@@ -639,8 +648,24 @@
       .hidden {
         display: none;
       }
+
       #generated-palette-container {
         display: none; /* 처음엔 숨김 */
+      }
+
+      .dark-mode-select {
+        background-color: #333; /* 다크모드 배경색 */
+        color: white; /* 텍스트 색상 */
+        border: 1px solid #555;
+      }
+
+      .dark-mode-option {
+        background-color: #555; /* 다크모드 배경색 */
+        color: white; /* 텍스트 색상 */
+      }
+
+      .hidden {
+        display: none;
       }
     </style>
   </head>
