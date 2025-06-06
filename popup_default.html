@@ -482,6 +482,7 @@
         padding: 16px;
         border-bottom: 1px solid #ddd;
         font-family: sans-serif;
+        position: relative;
       }
 
       .color-gen-inner {
@@ -667,6 +668,92 @@
       .hidden {
         display: none;
       }
+
+      .today-palette {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        background-color: #f8fafc;
+        border: 1px solid #94a3b8;
+        border-radius: 8px;
+        min-height: 220px;
+        padding: 12px;
+        z-index: 999;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .dark-mode .today-palette {
+        background-color: #1e1e1e;
+      }
+
+      .today-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .today-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .dark-mode .today-title {
+        color: white;
+      }
+
+      .today-content {
+        margin-top: 8px;
+        height: 130px;
+        align-items: center;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .today-colors {
+        display: flex;
+        height: 20px;
+        min-width: 250px;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .today-colors div {
+        flex: 1;
+        height: 100%;
+      }
+
+      .today-save-btn {
+        margin-top: 10px;
+        width: 100%;
+      }
+
+      .today-footer {
+        font-size: 12px;
+        color: #475569;
+        position: absolute;
+        gap: 6px;
+        bottom: 10px;
+        left: 10px;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        color: #64748b;
+      }
+
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -805,6 +892,26 @@
         id="generated-palette-container"
         class="generated-palette-container"
       ></div>
+
+      <!-- 오늘의 색상 추천 popup -->
+      <div id="today-palette-banner" class="today-palette hidden">
+        <div class="today-header">
+          <h3 class="today-title">🎯 오늘의 색상 조합</h3>
+          <button id="close-today-banner" class="close-btn">✕</button>
+        </div>
+        <div class="today-content">
+          <div id="today-colors" class="today-colors"></div>
+          <button id="today-save-btn" class="today-save-btn">
+            프리셋에 저장
+          </button>
+        </div>
+        <div class="today-footer">
+          <label>
+            <input type="checkbox" id="suppressTodayBanner" />
+            오늘 하루만 보지 않기
+          </label>
+        </div>
+      </div>
 
       <!-- 저장된 프리셋 container -->
       <div id="presetContainer">
