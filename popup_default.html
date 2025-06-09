@@ -171,61 +171,6 @@
         background: #444;
       }
 
-      #subscriptionBanner {
-        width: 100%;
-        background-color: #ffeeba;
-        color: #856404;
-        border-bottom: 1px solid #ffc107;
-        font-weight: bold;
-        text-align: center;
-        overflow: hidden;
-        max-height: 0;
-        transition: max-height 0.5s ease, padding 0.5s ease;
-        box-sizing: border-box;
-        position: relative;
-      }
-
-      #closeBanner {
-        position: absolute;
-        right: 5px;
-        top: 5px;
-        color: gray !important;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        padding: 0;
-        background: transparent !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      .dark-mode #closeBanner {
-        background: transparent;
-      }
-
-      .dark-mode #closeBanner:hover {
-        background: transparent;
-      }
-
-      #subscriptionBanner.show {
-        max-height: 100px;
-        padding: 10px;
-      }
-
-      #subscriptionBanner button {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 5px;
-        margin-top: 5px;
-      }
-
-      #subscriptionBanner button:hover {
-        background-color: #0056b3;
-      }
-
       #mainContent {
         transition: margin-top 0.5s ease;
         margin-top: 0px;
@@ -757,13 +702,6 @@
     </style>
   </head>
   <body>
-    <!-- ✅ 구독 배너 (초기에는 숨겨짐) -->
-    <div id="subscriptionBanner" class="hidden">
-      <button id="closeBanner">&times;</button>
-      <p id="subscribe_prompt">🔒 __MSG_subscribe_prompt__</p>
-      <button id="subscribeNow">__MSG_subscribe_button__</button>
-    </div>
-
     <div id="mainContent">
       <!-- ✅ 메인 네비게이션 바 -->
       <div id="navBarMain" class="navBar">
