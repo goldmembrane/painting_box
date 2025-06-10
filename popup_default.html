@@ -742,55 +742,66 @@
               <rect width="7" height="9" x="14" y="12" rx="1"></rect>
               <rect width="7" height="5" x="3" y="16" rx="1"></rect>
             </svg>
-            <h3 class="color-gen-title">색상 조합 생성</h3>
+            <h3 class="color-gen-title" id="color-generate-title"></h3>
           </div>
 
           <div class="color-gen-block">
-            <label for="generation-method" class="color-gen-label"
-              >생성 방식
+            <label
+              for="generation-method"
+              class="color-gen-label"
+              id="color-generate-label"
+            >
             </label>
             <select id="generation-method" class="color-gen-select">
-              <option value="">방식을 선택하세요</option>
-              <option value="preset">기존 프리셋 기반</option>
-              <option value="keyword">키워드</option>
-              <option value="ui">UI 디자인</option>
+              <option value="" data-i18n="select_mixture_method"></option>
+              <option value="preset" data-i18n="existing_preset"></option>
+              <option value="keyword" data-i18n="keyword_mixture"></option>
+              <option value="ui" data-i18n="ui_mixture"></option>
             </select>
           </div>
 
           <div id="preset-option-container" class="color-gen-block hidden">
-            <label for="preset-option" class="color-gen-label"
-              >기준 프리셋 선택</label
-            >
+            <label
+              for="preset-option"
+              class="color-gen-label"
+              id="color-generate-preset-label"
+            ></label>
             <select id="preset-option" class="color-gen-select">
-              <option value="">프리셋을 선택하세요</option>
+              <option value="" data-i18n="select_preset_in_option"></option>
             </select>
           </div>
 
           <div id="keyword-option-container" class="color-gen-block hidden">
-            <label for="keyword-option" class="color-gen-label">키워드</label>
+            <label
+              for="keyword-option"
+              class="color-gen-label"
+              id="select-keyword-color"
+            ></label>
             <select id="keyword-option" class="color-gen-select">
-              <option value="">키워드를 선택하세요</option>
-              <option value="nature">자연</option>
-              <option value="city">도시</option>
-              <option value="food">음식</option>
-              <option value="emotion">감정</option>
-              <option value="spring">봄</option>
-              <option value="summer">여름</option>
-              <option value="autumn">가을</option>
-              <option value="winter">겨울</option>
-              <option value="vintage">빈티지</option>
-              <option value="modern">모던</option>
-              <option value="warm">따뜻함</option>
-              <option value="cool">시원함</option>
-              <option value="bright">밝음</option>
-              <option value="dark">어두움</option>
-              <option value="calm">잔잔함</option>
-              <option value="dynamic">역동적인</option>
+              <option value="" data-i18n="select_keyword"></option>
+              <option value="nature" data-i18n="nature"></option>
+              <option value="city" data-i18n="city"></option>
+              <option value="food" data-i18n="food"></option>
+              <option value="emotion" data-i18n="emotion"></option>
+              <option value="spring" data-i18n="spring"></option>
+              <option value="summer" data-i18n="summer"></option>
+              <option value="autumn" data-i18n="autumn"></option>
+              <option value="winter" data-i18n="winter"></option>
+              <option value="vintage" data-i18n="vintage"></option>
+              <option value="modern" data-i18n="modern"></option>
+              <option value="warm" data-i18n="warm"></option>
+              <option value="cool" data-i18n="cool"></option>
+              <option value="bright" data-i18n="bright"></option>
+              <option value="dark" data-i18n="dark"></option>
+              <option value="calm" data-i18n="calm"></option>
+              <option value="dynamic" data-i18n="dynamic"></option>
             </select>
 
-            <label for="color-count-input" class="color-gen-label"
-              >색상 개수</label
-            >
+            <label
+              for="color-count-input"
+              class="color-gen-label"
+              id="color-count-mixture"
+            ></label>
             <input
               id="color-count-input"
               class="color-gen-select"
@@ -820,9 +831,7 @@
             <div class="color-preview" id="colorPreview"></div>
           </div>
 
-          <button id="generate-palette-btn" class="color-gen-button">
-            팔레트 생성
-          </button>
+          <button id="generate-palette-btn" class="color-gen-button"></button>
         </div>
       </div>
 
@@ -834,20 +843,16 @@
       <!-- 오늘의 색상 추천 popup -->
       <div id="today-palette-banner" class="today-palette hidden">
         <div class="today-header">
-          <h3 class="today-title">🎯 오늘의 색상 조합</h3>
+          <h3 class="today-title" id="daily-palette-title"></h3>
           <button id="close-today-banner" class="close-btn">✕</button>
         </div>
         <div class="today-content">
           <div id="today-colors" class="today-colors"></div>
-          <button id="today-save-btn" class="today-save-btn">
-            프리셋에 저장
-          </button>
+          <button id="today-save-btn" class="today-save-btn"></button>
         </div>
         <div class="today-footer">
-          <label>
-            <input type="checkbox" id="suppressTodayBanner" />
-            오늘 하루만 보지 않기
-          </label>
+          <input type="checkbox" id="suppressTodayBanner" />
+          <label id="dismiss-today"></label>
         </div>
       </div>
 

@@ -292,6 +292,43 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("exportPresetBtn").textContent =
     chrome.i18n.getMessage("export_preset");
 
+  document.getElementById("color-generate-title").textContent =
+    chrome.i18n.getMessage("create_color_mixture");
+
+  document.getElementById("color-generate-label").textContent =
+    chrome.i18n.getMessage("create_mixture_method");
+
+  document.getElementById("color-generate-preset-label").textContent =
+    chrome.i18n.getMessage("select_reference_preset");
+
+  document.getElementById("select-keyword-color").textContent =
+    chrome.i18n.getMessage("keyword_mixture");
+
+  document.getElementById("color-count-mixture").textContent =
+    chrome.i18n.getMessage("color_count");
+
+  document.getElementById("generate-palette-btn").textContent =
+    chrome.i18n.getMessage("create_color_palette");
+
+  document.getElementById("daily-palette-title").textContent =
+    chrome.i18n.getMessage("daily_color_mixture");
+
+  document.getElementById("today-save-btn").textContent =
+    chrome.i18n.getMessage("save_daily_color");
+
+  document.getElementById("dismiss-today").textContent =
+    chrome.i18n.getMessage("dismiss_today");
+
+  document.querySelectorAll("option[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    const message = chrome.i18n.getMessage(key);
+    if (message) {
+      el.label = message;
+      el.textContent = message;
+      el.innerHTML = message;
+    }
+  });
+
   function updateSubscriptionUI() {
     chrome.storage.sync.get(["isSubscribed"], (data) => {
       const unsubscribeBtn = document.getElementById("unsubscribeBtn");
@@ -692,7 +729,6 @@ function applyDarkMode() {
       option.classList.add("dark-mode-option");
     });
     document.getElementById("today-palette-banner").classList.add("dark-mode");
-    document.getElementById("today-title").classList.add("dark-mode");
   } else {
     footer.classList.remove("dark-mode-footer");
     document.querySelectorAll("textarea").forEach((textarea) => {
@@ -710,8 +746,9 @@ function applyDarkMode() {
     document.querySelectorAll("option").forEach((option) => {
       option.classList.remove("dark-mode-option");
     });
-    document.getElementById("today-palette").classList.remove("dark-mode");
-    document.getElementById("today-title").classList.remove("dark-mode");
+    document
+      .getElementById("today-palette-banner")
+      .classList.remove("dark-mode");
   }
 
   // ✅ 설정 화면 버튼에도 다크모드 적용
@@ -1615,6 +1652,25 @@ function generateTonePalette(baseHex, count = 20) {
   return palette;
 }
 
+const keywords = {
+  nature: chrome.i18n.getMessage("nature"),
+  city: chrome.i18n.getMessage("city"),
+  food: chrome.i18n.getMessage("food"),
+  emotion: chrome.i18n.getMessage("emotion"),
+  spring: chrome.i18n.getMessage("spring"),
+  summer: chrome.i18n.getMessage("summer"),
+  autumn: chrome.i18n.getMessage("autumn"),
+  winter: chrome.i18n.getMessage("winter"),
+  vintage: chrome.i18n.getMessage("vintage"),
+  modern: chrome.i18n.getMessage("modern"),
+  warm: chrome.i18n.getMessage("warm"),
+  cool: chrome.i18n.getMessage("cool"),
+  bright: chrome.i18n.getMessage("bright"),
+  dark: chrome.i18n.getMessage("dark"),
+  calm: chrome.i18n.getMessage("calm"),
+  dynamic: chrome.i18n.getMessage("dynamic"),
+};
+
 document
   .getElementById("generate-palette-btn")
   .addEventListener("click", () => {
@@ -1655,7 +1711,8 @@ document
         renderGeneratedPalette(
           "키워드 기반",
           "키워드 기반으로 생성된 색상 조합",
-          keywordColors
+          keywordColors,
+          keywords[selectedKeyword]
         );
       } else if (selected === "ui") {
         const selectedColor = window.selectedUiBaseColor;
@@ -1671,7 +1728,7 @@ document
     });
   });
 
-function renderGeneratedPalette(title, subtitle, colors) {
+function renderGeneratedPalette(title, subtitle, colors, keyword) {
   const container = document.getElementById("generated-palette-container");
   container.style.display = "block"; // ✅ 이 시점에만 보이게 함
   container.innerHTML = ""; // 초기화
@@ -1681,7 +1738,7 @@ function renderGeneratedPalette(title, subtitle, colors) {
   card.innerHTML = `
     <div class="palette-title">
       <span>🎨</span>
-      <span>${title}</span>
+      <span>${title} ${keyword && keyword}</span>
       <span style="font-size:10px; background:#334155; color:#60a5fa; padding: 2px 6px; border-radius: 6px;">Generated</span>
     </div>
     <div class="palette-subtitle">${subtitle}</div>
@@ -1719,7 +1776,7 @@ function renderGeneratedPalette(title, subtitle, colors) {
     });
     let newPreset = {
       id: Date.now(),
-      name: title,
+      name: keyword ? `${keyword}` : title,
       colors: colors,
       colorNames: invertedColorNames,
     };
