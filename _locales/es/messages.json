@@ -125,7 +125,9 @@
   "select_keyword": { "message": "Seleccione una palabra clave." },
   "color_count": { "message": "numero de colores" },
   "create_color_palette": { "message": "Creación de paleta" },
-  "daily_color_mixture": { "message": "🎯 Combinación de colores del día" },
+  "daily_color_mixture": {
+    "message": "🎯 Combinaciones de colores aleatorias recomendadas"
+  },
   "save_daily_color": { "message": "Guardar en prisset" },
   "dismiss_today": { "message": "No me veas por un día" }
 }

@@ -117,7 +117,9 @@
   "select_keyword": { "message": "select keyword" },
   "color_count": { "message": "number of colors" },
   "create_color_palette": { "message": "create palette" },
-  "daily_color_mixture": { "message": "🎯 color combination of the day" },
+  "daily_color_mixture": {
+    "message": "🎯 Recommended random color combinations"
+  },
   "save_daily_color": { "message": "save to preset" },
   "dismiss_today": { "message": "Don't see me for a day" }
 }
