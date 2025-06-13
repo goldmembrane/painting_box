@@ -1,8 +1,6 @@
 let selectedColors = new Set(); // ✅ 선택된 색상을 저장할 Set
 let selectedColorNames = {};
 
-const subscriptionBanner = document.getElementById("subscriptionBanner");
-
 // ✅ 구독 상태 확인 함수
 function checkSubscriptionStatus() {
   chrome.runtime.sendMessage(
@@ -19,28 +17,46 @@ function checkSubscriptionStatus() {
         // ✅ 저장
         chrome.storage.sync.set({ isSubscribed, userEmail: email });
 
-        if (!isSubscribed) {
-          subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-          setTimeout(() => {
-            subscriptionBanner.classList.add("show");
-            subscriptionBanner.classList.add("shifted");
-          }, 500);
+        if (isSubscribed) {
+          chrome.storage.sync.get(["userEmail"], async (data) => {
+            const email = data.userEmail;
 
-          setTimeout(() => {
-            subscriptionBanner.classList.remove("show");
-            subscriptionBanner.classList.remove("shifted");
-            setTimeout(() => {
-              subscriptionBanner.classList.add("hidden");
-            }, 500);
-          }, 5000);
-        } else {
-          subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+            if (!email) {
+              alert(chrome.i18n.getMessage("no_google_email"));
+              return;
+            }
+
+            const encryptedEmail = await encryptEmail(email);
+            const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
+              encryptedEmail
+            )}`;
+
+            // ✅ 새 탭으로 구독 페이지 열기
+            window.open(subscribeUrl, "_blank");
+            window.close();
+          });
         }
       } else {
         console.warn("❌ 응답 실패:", response.error);
       }
     }
   );
+}
+
+// ✅ AES 암호화 함수
+async function encryptEmail(email) {
+  try {
+    const res = await fetch(`https://palettebox.net/encrypt-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    return data.encrypted;
+  } catch (err) {
+    console.error("❌ 이메일 암호화 요청 실패:", err);
+    return null;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -94,18 +110,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ 처음엔 로딩 화면 표시, 본문 숨김
   loadingScreen.classList.remove("hidden");
   mainContent.classList.add("hidden");
-
-  const closeBtn = document.getElementById("closeBanner");
-
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      subscriptionBanner.classList.remove("show");
-      subscriptionBanner.classList.remove("shifted");
-      setTimeout(() => {
-        subscriptionBanner.classList.add("hidden");
-      }, 500); // 애니메이션 완료 후 숨김
-    });
-  }
 
   chrome.storage.local.get(
     ["capturedImage", "darkMode", "dataImage"],
@@ -395,30 +399,6 @@ function saveNewPreset() {
       // ✅ 새 프리셋 생성 후 저장
       if (presets.some((preset) => preset.name === newPresetName)) {
         alert(chrome.i18n.getMessage("already_existed_preset_name"));
-        return;
-      }
-
-      if (!isSubscribed && presets.length >= 1) {
-        const banner = document.getElementById("subscriptionBanner");
-        banner.classList.remove("hidden"); // ✅ 배너 표시
-
-        setTimeout(() => {
-          banner.classList.add("show");
-          banner.classList.add("shifted");
-        }, 500);
-
-        // ✅ 스크롤 최상단 이동
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-        // ✅ 5초 후 배너 자동 숨김
-        setTimeout(() => {
-          banner.classList.remove("show");
-          banner.classList.remove("shifted");
-
-          setTimeout(() => {
-            banner.classList.add("hidden");
-          }, 500);
-        }, 5000); // 5초 후 실행 (5000ms)
         return;
       }
 

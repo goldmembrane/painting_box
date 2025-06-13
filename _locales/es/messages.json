@@ -95,5 +95,39 @@
   "color_group": { "message": "grupo de color" },
   "black_and_white_series": { "message": "serie en blanco y negro" },
   "enter_color_name_optional": { "message": "Nombre del color (opcional)" },
-  "extract_color_mode": { "message": "Modo de extracción de colores" }
+  "extract_color_mode": { "message": "Modo de extracción de colores" },
+  "nature": { "message": "naturaleza" },
+  "city": { "message": "ciudad" },
+  "food": { "message": "alimento" },
+  "emotion": { "message": "emoción" },
+  "spring": { "message": "primavera" },
+  "summer": { "message": "verano" },
+  "autumn": { "message": "otoño" },
+  "winter": { "message": "invierno" },
+  "vintage": { "message": "antigua" },
+  "modern": { "message": "moderna" },
+  "warm": { "message": "cálida" },
+  "cool": { "message": "frío" },
+  "bright": { "message": "brillante" },
+  "dark": { "message": "oscuro" },
+  "calm": { "message": "tranquila" },
+  "dynamic": { "message": "dinámico" },
+  "create_color_mixture": { "message": "Crea combinaciones de colores" },
+  "create_mixture_method": { "message": "Método de creación" },
+  "select_mixture_method": { "message": "Elige un método." },
+  "existing_preset": { "message": "Basado en ajustes prisset existentes" },
+  "keyword_mixture": { "message": "palabra clave" },
+  "ui_mixture": { "message": "UI diseño" },
+  "select_reference_preset": {
+    "message": "Seleccionar un ajuste prisset de referencia"
+  },
+  "select_preset_in_option": { "message": "Seleccione un ajuste prisset." },
+  "select_keyword": { "message": "Seleccione una palabra clave." },
+  "color_count": { "message": "numero de colores" },
+  "create_color_palette": { "message": "Creación de paleta" },
+  "daily_color_mixture": {
+    "message": "🎯 Combinaciones de colores aleatorias recomendadas"
+  },
+  "save_daily_color": { "message": "Guardar en prisset" },
+  "dismiss_today": { "message": "No me veas por un día" }
 }

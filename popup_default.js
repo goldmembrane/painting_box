@@ -6,8 +6,7 @@ script.onload = () => {
 };
 document.head.appendChild(script);
 
-// ✅ 구독 배너 보여주기 여부
-const subscriptionBanner = document.getElementById("subscriptionBanner");
+let selectedKeyword = "";
 
 // ✅ popup_default.js에서 구독 상태 요청
 function fetchSubscriptionStatusFromBackground() {
@@ -26,21 +25,22 @@ function fetchSubscriptionStatusFromBackground() {
         chrome.storage.sync.set({ isSubscribed, userEmail: email });
 
         if (!isSubscribed) {
-          subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-          setTimeout(() => {
-            subscriptionBanner.classList.add("show");
-            subscriptionBanner.classList.add("shifted");
-          }, 500);
+          chrome.storage.sync.get(["userEmail"], async (data) => {
+            const email = data.userEmail;
 
-          setTimeout(() => {
-            subscriptionBanner.classList.remove("show");
-            subscriptionBanner.classList.remove("shifted");
-            setTimeout(() => {
-              subscriptionBanner.classList.add("hidden");
-            }, 500);
-          }, 5000);
-        } else {
-          subscriptionBanner.classList.add("hidden"); // ✅ 구독 중이면 배너 숨김
+            if (!email) {
+              alert(chrome.i18n.getMessage("no_google_email"));
+              return;
+            }
+
+            const encryptedEmail = await encryptEmail(email);
+            const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
+              encryptedEmail
+            )}`;
+
+            // ✅ 새 탭으로 구독 페이지 열기
+            window.open(subscribeUrl, "_blank");
+          });
         }
       } else {
         console.warn("❌ 응답 실패:", response.error);
@@ -80,24 +80,134 @@ async function encryptSubId(subId) {
   }
 }
 
+// 오늘의 색상 추천 조합 관련 함수
+function hslToRgb(h, s, l) {
+  h /= 360;
+  s /= 100;
+  l /= 100;
+
+  let r, g, b;
+
+  if (s === 0) {
+    r = g = b = l; // 무채색
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+
+  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
+function colorDistance([r1, g1, b1], [r2, g2, b2]) {
+  return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
+}
+
+function generateDistinctPalette(seed, count = 5, previousHexes = []) {
+  const hash = [...seed].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const palette = [];
+  const prevRgb = previousHexes.map(hexToRgb);
+
+  let i = 0;
+  let attempts = 0;
+  while (palette.length < count && attempts < 500) {
+    const hue = (hash + i * 47 + Math.floor(Math.random() * 50)) % 360;
+    const saturation = 50 + Math.floor(Math.random() * 40); // 50~90%
+    const lightness = 40 + Math.floor(Math.random() * 20); // 40~60%
+    const rgb = hslToRgb(hue, saturation, lightness);
+    const hex = rgbToHex(rgb);
+
+    // 다른 색들과 비교
+    const isSimilar = [...palette, ...prevRgb].some((existing) => {
+      const existingRgb =
+        typeof existing === "string" ? hexToRgb(existing) : existing;
+      return colorDistance(existingRgb, rgb) < 50;
+    });
+
+    if (!isSimilar) {
+      palette.push(hex);
+    }
+
+    i++;
+    attempts++;
+  }
+
+  return palette;
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+  const bigint = parseInt(hex, 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+}
+
+function rgbToHex([r, g, b]) {
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function showTodayPalette() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const randomSeed = new Date().toISOString(); // 매번 달라짐
+
+  chrome.storage.local.get(
+    ["suppressTodayBanner", "lastTodayColors"],
+    (data) => {
+      if (data.suppressTodayBanner === todayKey) return;
+
+      const banner = document.getElementById("today-palette-banner");
+      const container = document.getElementById("today-colors");
+
+      const previousColors = data.lastTodayColors || [];
+      const palette = generateDistinctPalette(randomSeed, 5, previousColors);
+
+      // 저장
+      chrome.storage.local.set({ lastTodayColors: palette });
+
+      container.innerHTML = "";
+      palette.forEach((hex) => {
+        const swatch = document.createElement("div");
+        swatch.style.backgroundColor = hex;
+        container.appendChild(swatch);
+      });
+
+      banner.classList.remove("hidden");
+
+      document
+        .getElementById("close-today-banner")
+        .addEventListener("click", () => {
+          const suppress = document.getElementById(
+            "suppressTodayBanner"
+          ).checked;
+          if (suppress) {
+            chrome.storage.local.set({ suppressTodayBanner: todayKey });
+          }
+          banner.classList.add("hidden");
+        });
+    }
+  );
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadPresets();
   fetchSubscriptionStatusFromBackground();
+  showTodayPalette();
   document
     .getElementById("toggleEditMode")
     .addEventListener("click", toggleEditMode);
 
   const lang = chrome.i18n.getUILanguage();
-
-  document.getElementById("subscribe_prompt").textContent =
-    chrome.i18n.getMessage("subscribe_prompt");
-
-  if (lang.startsWith("ja")) {
-    document.getElementById("subscribe_prompt").style.fontSize = "11px";
-  }
-
-  document.getElementById("subscribeNow").textContent =
-    chrome.i18n.getMessage("subscribe_button");
 
   document.getElementById("app_name").textContent =
     chrome.i18n.getMessage("app_name");
@@ -182,28 +292,260 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("exportPresetBtn").textContent =
     chrome.i18n.getMessage("export_preset");
 
+  document.getElementById("color-generate-title").textContent =
+    chrome.i18n.getMessage("create_color_mixture");
+
+  document.getElementById("color-generate-label").textContent =
+    chrome.i18n.getMessage("create_mixture_method");
+
+  document.getElementById("color-generate-preset-label").textContent =
+    chrome.i18n.getMessage("select_reference_preset");
+
+  document.getElementById("select-keyword-color").textContent =
+    chrome.i18n.getMessage("keyword_mixture");
+
+  document.getElementById("color-count-mixture").textContent =
+    chrome.i18n.getMessage("color_count");
+
+  document.getElementById("generate-palette-btn").textContent =
+    chrome.i18n.getMessage("create_color_palette");
+
+  document.getElementById("daily-palette-title").textContent =
+    chrome.i18n.getMessage("daily_color_mixture");
+
+  document.getElementById("today-save-btn").textContent =
+    chrome.i18n.getMessage("save_daily_color");
+
+  document.getElementById("dismiss-today").textContent =
+    chrome.i18n.getMessage("dismiss_today");
+
+  document.querySelectorAll("option[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    const message = chrome.i18n.getMessage(key);
+    if (message) {
+      el.label = message;
+      el.textContent = message;
+      el.innerHTML = message;
+    }
+  });
+
   function updateSubscriptionUI() {
     chrome.storage.sync.get(["isSubscribed"], (data) => {
-      const isSubscribed = data.isSubscribed;
-
-      const subscribeBtn = document.getElementById("subscribeBtn");
       const unsubscribeBtn = document.getElementById("unsubscribeBtn");
 
-      if (isSubscribed) {
-        subscribeBtn.classList.add("hidden");
-        unsubscribeBtn.classList.remove("hidden");
-      } else {
-        subscribeBtn.classList.remove("hidden");
-        unsubscribeBtn.classList.add("hidden");
-      }
+      unsubscribeBtn.classList.remove("hidden");
     });
   }
 
+  // 색상 조합 키워드 옵션 선택 관련
+  const generationMethodSelect = document.getElementById("generation-method");
+  const keywordOptionContainer = document.getElementById(
+    "keyword-option-container"
+  );
+  const presetOptionContainer = document.getElementById(
+    "preset-option-container"
+  );
+
+  const uiOptionContainer = document.getElementById("color-picker-container");
+  const presetOptionSelect = document.getElementById("preset-option");
+
+  generationMethodSelect.addEventListener("change", () => {
+    const selected = generationMethodSelect.value;
+
+    if (selected === "keyword") {
+      keywordOptionContainer.classList.remove("hidden");
+    } else {
+      keywordOptionContainer.classList.add("hidden");
+    }
+
+    if (selected === "ui") {
+      uiOptionContainer.classList.remove("hidden");
+    } else {
+      uiOptionContainer.classList.add("hidden");
+    }
+
+    // 프리셋 옵션 처리
+    if (selected === "preset") {
+      presetOptionContainer.classList.remove("hidden");
+      loadPresetOptions();
+    } else {
+      presetOptionContainer.classList.add("hidden");
+    }
+  });
+
+  function loadPresetOptions() {
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+
+      presetOptionSelect.innerHTML = `<option value="">프리셋을 선택하세요</option>`;
+
+      presets.forEach((preset, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = preset.name || `프리셋 ${index + 1}`;
+        presetOptionSelect.appendChild(option);
+      });
+
+      presetOptionSelect.addEventListener("change", () => {
+        const selectedValue = presetOptionSelect.value;
+        selectedPresetIndex =
+          selectedValue === "" ? null : parseInt(selectedValue, 10);
+      });
+    });
+  }
+
+  const keywordSelect = document.getElementById("keyword-option");
+
+  keywordSelect.addEventListener("change", () => {
+    selectedKeyword = keywordSelect.value;
+  });
+
+  // ui 디자인 색상 추천 조합용 기준 색상 선택 ui 관련 로직
+
+  const colorWheelCanvas = document.getElementById("colorWheelCanvas");
+
+  // 색상 선택시에만 마우스 커서가 변하도록 하는 로직
+  colorWheelCanvas.addEventListener("mouseenter", () => {
+    colorWheelCanvas.style.cursor =
+      "url('./images/cursor_custom.png') 0 0, auto";
+  });
+
+  colorWheelCanvas.addEventListener("mouseleave", () => {
+    colorWheelCanvas.style.cursor = "default";
+  });
+  const ctx = colorWheelCanvas.getContext("2d");
+  const brightnessSlider = document.getElementById("brightnessSlider");
+  const colorPreview = document.getElementById("colorPreview");
+
+  let selectedHue = 0;
+  let selectedSaturation = 100;
+  let selectedBrightness = 50;
+
+  function drawColorWheel(radius = 100) {
+    const image = ctx.createImageData(radius * 2, radius * 2);
+
+    for (let y = -radius; y < radius; y++) {
+      for (let x = -radius; x < radius; x++) {
+        const dx = x;
+        const dy = y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > radius) continue;
+
+        const angle = Math.atan2(dy, dx);
+        let hue = (angle * 180) / Math.PI;
+        if (hue < 0) hue += 360; // ✅ hue 값을 0~360도로 보정
+
+        const sat = (d / radius) * 100;
+        const [r, g, b] = hslToRgb(hue, sat, 50); // lightness 50% 기준
+
+        const px = x + radius;
+        const py = y + radius;
+        const idx = (py * radius * 2 + px) * 4;
+
+        image.data[idx] = r;
+        image.data[idx + 1] = g;
+        image.data[idx + 2] = b;
+        image.data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(image, 0, 0);
+  }
+
+  // HSL → RGB 변환
+  function hslToRgb(h, s, l) {
+    h = h / 360;
+    s = s / 100;
+    l = l / 100;
+
+    let r, g, b;
+
+    if (s === 0) {
+      r = g = b = l; // 무채색
+    } else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
+  // 색상 선택 시
+  colorWheelCanvas.addEventListener("click", (e) => {
+    const rect = colorWheelCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const dx = x - 100;
+    const dy = y - 100;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance > 100) return;
+
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    const hue = (angle + 360) % 360;
+    const saturation = (distance / 100) * 100;
+
+    selectedHue = hue;
+    selectedSaturation = saturation;
+
+    updateColorPreview();
+  });
+
+  // 명도 조절
+  brightnessSlider.addEventListener("input", () => {
+    selectedBrightness = parseInt(brightnessSlider.value, 10);
+    updateColorPreview();
+  });
+
+  // 미리보기 업데이트
+  function updateColorPreview() {
+    const [r, g, b] = hslToRgb(
+      selectedHue,
+      selectedSaturation,
+      selectedBrightness
+    );
+    const hex = `#${[r, g, b]
+      .map((v) => Math.round(v).toString(16).padStart(2, "0"))
+      .join("")}`;
+
+    colorPreview.style.backgroundColor = hex;
+    window.selectedUiBaseColor = hex; // 다른 로직에서 사용 가능
+  }
+
+  drawColorWheel(); // 초기 렌더링
+  brightnessSlider.value = 50; // ✅ UI 슬라이더 값도 50으로 설정
+  updateColorPreview(); // ✅ 초기 색상 미리보기 반영
+
+  // 설정 버튼을 눌렀을 때 화면 및 네비게이션 변경
   document.getElementById("openSettingsBtn").addEventListener("click", () => {
     document.getElementById("presetContainer").classList.add("hidden");
     document.getElementById("settingsScreen").classList.remove("hidden");
     document.getElementById("navBarMain").classList.add("hidden");
     document.getElementById("navBarSetting").classList.remove("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.add("hidden");
+    document.getElementById("generated-palette-container").style.display =
+      "none";
+    document.getElementById("generation-method").value = "";
+    document.getElementById("preset-option-container").classList.add("hidden");
+    document.getElementById("keyword-option-container").classList.add("hidden");
+    document.getElementById("preset-option").value = "";
+    document.getElementById("keyword-option").value = "";
     updateSubscriptionUI();
   });
 
@@ -212,6 +554,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("presetContainer").classList.add("hidden");
     document.getElementById("newPresetScreen").classList.remove("hidden");
     document.getElementById("navBarMain").classList.add("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.add("hidden");
     document.getElementById("navBarNewPreset").classList.remove("hidden");
     document.getElementById("newPresetName").value = "";
     document.getElementById("newPresetName").disabled = false;
@@ -219,12 +564,22 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("importPresetName").disabled = false;
     document.getElementById("encryptedCodeInput").value = "";
     document.getElementById("encryptedCodeInput").disabled = false;
+    document.getElementById("generated-palette-container").style.display =
+      "none";
+    document.getElementById("generation-method").value = "";
+    document.getElementById("preset-option-container").classList.add("hidden");
+    document.getElementById("keyword-option-container").classList.add("hidden");
+    document.getElementById("preset-option").value = "";
+    document.getElementById("keyword-option").value = "";
   });
 
   // ✅ 뒤로 가기 버튼 클릭 시 메인 화면으로 전환
   document.getElementById("backToMain").addEventListener("click", () => {
     document.getElementById("newPresetScreen").classList.add("hidden");
     document.getElementById("presetContainer").classList.remove("hidden");
+    document
+      .getElementById("color-generation-container")
+      .classList.remove("hidden");
     document.getElementById("navBarNewPreset").classList.add("hidden");
     document.getElementById("navBarMain").classList.remove("hidden");
     document.getElementById("newPresetName").value = "";
@@ -256,39 +611,10 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("presetContainer").classList.remove("hidden");
       document.getElementById("navBarSetting").classList.add("hidden");
       document.getElementById("navBarMain").classList.remove("hidden");
+      document
+        .getElementById("color-generation-container")
+        .classList.remove("hidden");
     });
-
-  const closeBtn = document.getElementById("closeBanner");
-
-  if (closeBtn) {
-    closeBtn.addEventListener("click", () => {
-      subscriptionBanner.classList.remove("show");
-      subscriptionBanner.classList.remove("shifted");
-      setTimeout(() => {
-        subscriptionBanner.classList.add("hidden");
-      }, 500); // 애니메이션 완료 후 숨김
-    });
-  }
-
-  // 구독하기 버튼 클릭
-  document.getElementById("subscribeBtn").addEventListener("click", () => {
-    chrome.storage.sync.get(["userEmail"], async (data) => {
-      const email = data.userEmail;
-
-      if (!email) {
-        alert(chrome.i18n.getMessage("no_google_email"));
-        return;
-      }
-
-      const encryptedEmail = await encryptEmail(email);
-      const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
-        encryptedEmail
-      )}`;
-
-      // ✅ 새 탭으로 구독 페이지 열기
-      window.open(subscribeUrl, "_blank");
-    });
-  });
 
   // 구독 취소하기 버튼 클릭
   document
@@ -392,6 +718,17 @@ function applyDarkMode() {
     document.querySelectorAll("input").forEach((input) => {
       input.classList.add("dark-mode-input");
     });
+    document
+      .getElementById("generated-palette-container")
+      .classList.add("dark-mode");
+
+    document.querySelectorAll("select").forEach((select) => {
+      select.classList.add("dark-mode-select");
+    });
+    document.querySelectorAll("option").forEach((option) => {
+      option.classList.add("dark-mode-option");
+    });
+    document.getElementById("today-palette-banner").classList.add("dark-mode");
   } else {
     footer.classList.remove("dark-mode-footer");
     document.querySelectorAll("textarea").forEach((textarea) => {
@@ -400,6 +737,18 @@ function applyDarkMode() {
     document.querySelectorAll("input").forEach((input) => {
       input.classList.remove("dark-mode-input");
     });
+    document
+      .getElementById("generated-palette-container")
+      .classList.remove("dark-mode");
+    document.querySelectorAll("select").forEach((select) => {
+      select.classList.remove("dark-mode-select");
+    });
+    document.querySelectorAll("option").forEach((option) => {
+      option.classList.remove("dark-mode-option");
+    });
+    document
+      .getElementById("today-palette-banner")
+      .classList.remove("dark-mode");
   }
 
   // ✅ 설정 화면 버튼에도 다크모드 적용
@@ -425,70 +774,46 @@ document.getElementById("savePreset").addEventListener("click", () => {
     return;
   }
 
-  chrome.storage.sync.get(
-    ["colorPresets", "selectedColors", "isSubscribed"],
-    (data) => {
-      let presets = data.colorPresets || [];
-      let selectedColors = Array.from(data.selectedColors || []);
-      let isSubscribed = data.isSubscribed || false;
+  chrome.storage.sync.get(["colorPresets", "selectedColors"], (data) => {
+    let presets = data.colorPresets || [];
+    let selectedColors = Array.from(data.selectedColors || []);
+    // let isSubscribed = data.isSubscribed || false;
 
-      // ✅ 동일한 프리셋 이름이 있는지 확인
-      if (presets.some((preset) => preset.name === presetName)) {
-        alert(chrome.i18n.getMessage("already_existed_preset_name"));
-        return;
-      }
-
-      // ✅ 구독이 없고 프리셋 개수가 2개 이상이면 제한
-      if (!isSubscribed && presets.length >= 1) {
-        console.log(isSubscribed);
-        const banner = document.getElementById("subscriptionBanner");
-        banner.classList.remove("hidden"); // ✅ 배너 표시
-        setTimeout(() => {
-          banner.classList.add("show");
-          banner.classList.add("shifted");
-        }, 500);
-
-        // ✅ 10초 후 배너 자동 숨김
-        setTimeout(() => {
-          banner.classList.remove("show");
-          banner.classList.remove("shifted");
-          setTimeout(() => {
-            banner.classList.add("hidden");
-          }, 500);
-        }, 5000); // 5초 후 실행 (5000ms)
-        return;
-      }
-
-      let newPreset = {
-        id: Date.now(),
-        name: presetName,
-        colors: selectedColors,
-      };
-
-      presets.push(newPreset);
-      chrome.storage.sync.set({ colorPresets: presets }, () => {
-        loadPresets();
-
-        // ✅ 저장 후 메인 화면으로 돌아감
-        document.getElementById("newPresetScreen").classList.add("hidden");
-        document.getElementById("presetContainer").classList.remove("hidden");
-        document.getElementById("navBarNewPreset").classList.add("hidden");
-        document.getElementById("navBarMain").classList.remove("hidden");
-        document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
-        alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
-      });
-
-      console.log(document.getElementById("newPresetName").value);
+    // ✅ 동일한 프리셋 이름이 있는지 확인
+    if (presets.some((preset) => preset.name === presetName)) {
+      alert(chrome.i18n.getMessage("already_existed_preset_name"));
+      return;
     }
-  );
+
+    let newPreset = {
+      id: Date.now(),
+      name: presetName,
+      colors: selectedColors,
+    };
+
+    presets.push(newPreset);
+    chrome.storage.sync.set({ colorPresets: presets }, () => {
+      loadPresets();
+
+      // ✅ 저장 후 메인 화면으로 돌아감
+      document.getElementById("newPresetScreen").classList.add("hidden");
+      document.getElementById("presetContainer").classList.remove("hidden");
+      document.getElementById("navBarNewPreset").classList.add("hidden");
+      document.getElementById("navBarMain").classList.remove("hidden");
+      document
+        .getElementById("color-generation-container")
+        .classList.remove("hidden");
+      document.getElementById("newPresetName").value = ""; // 입력 필드 초기화
+      alert(`${presetName} ${chrome.i18n.getMessage("create_preset_alert")}`);
+    });
+  });
 });
 
 // ✅ 저장된 프리셋 불러오기 및 UI 업데이트
 function loadPresets() {
-  chrome.storage.sync.get(["colorPresets", "isSubscribed"], (data) => {
+  chrome.storage.sync.get(["colorPresets"], (data) => {
     let presetContainer = document.getElementById("presetList");
     presetContainer.innerHTML = "";
-    let isSubscribed = data.isSubscribed || false;
 
     if (data.colorPresets && data.colorPresets.length > 0) {
       data.colorPresets.forEach((preset, presetIndex) => {
@@ -566,28 +891,12 @@ function loadPresets() {
         encryptBtn.innerText = chrome.i18n.getMessage("export_code_button");
         encryptBtn.onclick = (event) => {
           event.stopPropagation();
-          if (!isSubscribed) {
-            subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-            setTimeout(() => {
-              subscriptionBanner.classList.add("show");
-              subscriptionBanner.classList.add("shifted");
-            }, 500);
-
-            setTimeout(() => {
-              subscriptionBanner.classList.remove("show");
-              subscriptionBanner.classList.remove("shifted");
-              setTimeout(() => {
-                subscriptionBanner.classList.add("hidden");
-              }, 500);
-            }, 5000);
-          } else {
-            encryptAndCopyToClipboard(
-              preset,
-              codeContainer,
-              codeTextarea,
-              encryptBtn
-            );
-          }
+          encryptAndCopyToClipboard(
+            preset,
+            codeContainer,
+            codeTextarea,
+            encryptBtn
+          );
         };
 
         let exportPresetBtn = document.createElement("button");
@@ -595,23 +904,7 @@ function loadPresets() {
         exportPresetBtn.innerText = chrome.i18n.getMessage("export_preset");
         exportPresetBtn.onclick = (event) => {
           event.stopPropagation();
-          if (!isSubscribed) {
-            subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-            setTimeout(() => {
-              subscriptionBanner.classList.add("show");
-              subscriptionBanner.classListadd("shifted");
-            }, 500);
-
-            setTimeout(() => {
-              subscriptionBanner.classList.remove("show");
-              subscriptionBanner.classList.remove("shifted");
-              setTimeout(() => {
-                subscriptionBanner.classList.add("hidden");
-              }, 500);
-            }, 5000);
-          } else {
-            exportPresetInPopup();
-          }
+          exportPresetInPopup(preset);
         };
 
         presetDiv.appendChild(presetHeader);
@@ -633,6 +926,7 @@ function loadPresets() {
 function showPresetDetails(presetIndex) {
   document.getElementById("navBarMain").classList.add("hidden");
   document.getElementById("navBarDetail").classList.remove("hidden");
+  document.getElementById("color-generation-container").classList.add("hidden");
   chrome.storage.sync.get(["colorPresets"], (data) => {
     let presets = data.colorPresets || [];
     let preset = presets[presetIndex];
@@ -765,25 +1059,48 @@ function savePresetColorNames() {
 }
 
 document.getElementById("exportPresetBtn").addEventListener("click", () => {
-  chrome.storage.sync.get(["isSubscribed"], (data) => {
-    let isSubscribed = data.isSubscribed || false;
-    if (!isSubscribed) {
-      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-      setTimeout(() => {
-        subscriptionBanner.classList.add("show");
-        subscriptionBanner.classListadd("shifted");
-      }, 500);
+  chrome.storage.sync.get(["colorPresets"], (data) => {
+    const presets = data.colorPresets || [];
 
-      setTimeout(() => {
-        subscriptionBanner.classList.remove("show");
-        subscriptionBanner.classList.remove("shifted");
-        setTimeout(() => {
-          subscriptionBanner.classList.add("hidden");
-        }, 500);
-      }, 5000);
-    } else {
-      exportPresetInPopup();
+    if (presets.length === 0) {
+      alert(chrome.i18n.getMessage("no_find_saved_preset"));
+      return;
     }
+
+    // // ✅ 선택된 프리셋 인덱스가 유효한지 확인
+    if (selectedPresetIndex === null || selectedPresetIndex >= presets.length) {
+      alert(chrome.i18n.getMessage("no_find_saved_preset"));
+      return;
+    }
+
+    const selectedPreset = presets[selectedPresetIndex];
+    const colorNames = selectedPreset.colorNames || {};
+
+    // ✅ 선택한 프리셋의 colorNames만 export
+    const exportData = {};
+    Object.entries(colorNames).forEach(([name, hex]) => {
+      exportData[name] = hex;
+    });
+
+    const jsonString = JSON.stringify(exportData, null, 2); // 보기 좋게 포맷
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    chrome.downloads.download(
+      {
+        url: url,
+        filename: `${selectedPreset.name || "colors"}.json`,
+        saveAs: true,
+      },
+      (downloadId) => {
+        if (chrome.runtime.lastError) {
+          console.error("❌ 다운로드 실패:", chrome.runtime.lastError.message);
+          alert(chrome.i18n.getMessage("fail_download"));
+        } else {
+          console.log("✅ 다운로드 시작됨! ID:", downloadId);
+        }
+      }
+    );
   });
 });
 
@@ -796,6 +1113,9 @@ function showPresetList() {
   document.getElementById("presetDetails").classList.add("hidden");
 
   document.getElementById("addColorScreen").classList.add("hidden");
+  document
+    .getElementById("color-generation-container")
+    .classList.remove("hidden");
 
   document.getElementById("newColorName").value = "";
   document.getElementById("colorPicker").value = "#000000";
@@ -850,6 +1170,672 @@ document.getElementById("addColorToPreset").addEventListener("click", () => {
   });
 });
 
+// 색상 추천 조합 보조 함수
+function hexToHSL(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  let max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  let c = (1 - Math.abs(2 * l - 1)) * s;
+  let x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  let m = l - c / 2;
+  let r, g, b;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+// 기존 프리셋 기반 색상 조합 추천 함수
+function generateSimilarColorsFromPreset(baseColors) {
+  const result = [];
+  const usedHues = [];
+
+  for (const hex of baseColors) {
+    const [baseH, baseS, baseL] = hexToHSL(hex);
+
+    let h,
+      s,
+      l,
+      tries = 0;
+    do {
+      h = (baseH + (Math.random() * 60 - 30) + 360) % 360;
+      s = Math.max(30, Math.min(100, baseS + (Math.random() * 30 - 15)));
+      l = Math.max(20, Math.min(90, baseL + (Math.random() * 20 - 10)));
+
+      const tooClose = usedHues.some(
+        (existingH) =>
+          Math.abs(existingH - h) < 18 || Math.abs(existingH - h) > 342
+      );
+      tries++;
+      if (!tooClose || tries > 10) break; // 탈출 조건
+    } while (true);
+
+    usedHues.push(h);
+    result.push(hslToHex(h, s, l));
+  }
+
+  return result;
+}
+
+// 키워드 기반 추천 함수
+
+const keywordColorProfiles = {
+  spring: {
+    hueGroups: [
+      [40, 60],
+      [330, 360],
+      [300, 320],
+      [130, 160],
+    ],
+    satRange: [30, 70],
+    lightRange: [60, 80],
+    options: {
+      excludeColors: ["brown"],
+      distinctHuesOnly: true,
+    },
+  },
+  summer: {
+    hueGroups: [
+      [180, 220],
+      [100, 130],
+    ],
+    satRange: [40, 80],
+    lightRange: [60, 80],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  autumn: {
+    hueGroups: [
+      [20, 40],
+      [10, 30],
+      [0, 10],
+      [340, 360],
+    ],
+    satRange: [40, 70],
+    lightRange: [50, 70],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  winter: {
+    hueGroups: [
+      [210, 240],
+      [200, 220],
+    ],
+    satRange: [30, 60],
+    lightRange: [70, 90],
+    options: {
+      excludeColors: ["green"],
+      includePastel: true,
+      distinctHuesOnly: true,
+    },
+  },
+  nature: {
+    hueGroups: [
+      [100, 140],
+      [190, 210],
+    ],
+    satRange: [40, 80],
+    lightRange: [30, 60],
+    options: {
+      pickOneGroupOnly: true,
+      distinctHuesOnly: true,
+    },
+  },
+  city: {
+    hueGroups: [
+      [200, 240],
+      [0, 0],
+    ],
+    satRange: [0, 20],
+    lightRange: [20, 60],
+    options: {
+      excludePureColors: true,
+      distinctHuesOnly: true,
+    },
+  },
+  food: {
+    hueGroups: [
+      [10, 30],
+      [0, 10],
+      [40, 60],
+      [100, 120],
+    ],
+    satRange: [50, 100],
+    lightRange: [40, 70],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  emotion: {
+    hueGroups: [
+      [250, 280],
+      [200, 220],
+      [0, 10],
+    ],
+    satRange: [10, 60],
+    lightRange: [30, 70],
+    options: {
+      includeGray: true,
+      distinctHuesOnly: true,
+    },
+  },
+  modern: {
+    hueGroups: [
+      [210, 240],
+      [0, 0],
+    ],
+    satRange: [0, 25],
+    lightRange: [20, 70],
+    options: {
+      includeGray: true,
+      distinctHuesOnly: true,
+    },
+  },
+  vintage: {
+    hueGroups: [
+      [30, 50],
+      [10, 20],
+    ],
+    satRange: [20, 60],
+    lightRange: [40, 70],
+    options: {
+      distinctHuesOnly: true,
+      excludePureColors: true,
+    },
+  },
+  warm: {
+    hueGroups: [[0, 40]],
+    satRange: [30, 60],
+    lightRange: [50, 75],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  cool: {
+    hueGroups: [
+      [180, 200],
+      [120, 150],
+    ],
+    satRange: [40, 70],
+    lightRange: [60, 80],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  bright: {
+    hueGroups: [
+      [50, 80],
+      [300, 340],
+      [100, 140],
+    ],
+    satRange: [30, 60],
+    lightRange: [75, 95],
+    options: {
+      distinctHuesOnly: true,
+    },
+  },
+  dark: {
+    hueGroups: [
+      [240, 260],
+      [0, 10],
+      [30, 50],
+    ],
+    satRange: [10, 40],
+    lightRange: [10, 30],
+    options: {
+      includeBlack: true,
+      distinctHuesOnly: true,
+    },
+  },
+  calm: {
+    hueGroups: [
+      [160, 200],
+      [20, 40],
+    ],
+    satRange: [10, 30],
+    lightRange: [60, 85],
+    options: {
+      excludeColors: ["brown"],
+      distinctHuesOnly: true,
+    },
+  },
+  dynamic: {
+    hueGroups: [
+      [0, 20],
+      [30, 50],
+      [160, 180],
+    ],
+    satRange: [70, 100],
+    lightRange: [40, 60],
+    options: {
+      includeBlack: true,
+      preferComplementary: true,
+      distinctHuesOnly: true,
+    },
+  },
+};
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function hslToHexKeyword(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let r, g, b;
+
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+
+  const to255 = (n) => Math.round((n + m) * 255);
+  return `#${[r, g, b]
+    .map(to255)
+    .map((v) => v.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function isDistinctHue(h, usedHues) {
+  return usedHues.every((uh) => Math.abs(uh - h) > 10);
+}
+
+function isBrown(h, s, l) {
+  return h >= 20 && h <= 45 && s >= 30 && s <= 60 && l >= 30 && l <= 55;
+}
+
+// 키워드 기반 색상 조합 함수
+function getBaseColorFromKeyword(keyword, count = 5) {
+  const profile = keywordColorProfiles[keyword];
+  if (!profile) return [];
+
+  const {
+    hueGroups = [],
+    satRange = [50, 100],
+    lightRange = [50, 70],
+    options = {},
+  } = profile;
+
+  const results = new Set();
+  const usedHues = [];
+
+  const targetHueGroups = options.pickOneGroupOnly
+    ? [hueGroups[Math.floor(Math.random() * hueGroups.length)]]
+    : hueGroups;
+
+  let attempts = 0;
+  const maxAttempts = 1000;
+
+  // 조건 기반 특수 색상 삽입
+  if (options.includeGray && results.size < count) {
+    results.add(hslToHex(0, 0, randomInRange(40, 70)));
+  }
+
+  if (options.includeBlack && results.size < count) {
+    results.add(hslToHex(0, 0, randomInRange(5, 15)));
+  }
+
+  if (options.includePastel && results.size < count) {
+    const [hMin, hMax] =
+      targetHueGroups[Math.floor(Math.random() * targetHueGroups.length)];
+    const pastelHue = Math.floor(randomInRange(hMin, hMax));
+    results.add(
+      hslToHex(pastelHue, randomInRange(10, 30), randomInRange(80, 90))
+    );
+  }
+
+  while (results.size < count && attempts < maxAttempts) {
+    attempts++;
+
+    const [hMin, hMax] =
+      targetHueGroups[Math.floor(Math.random() * targetHueGroups.length)];
+    const h = Math.floor(randomInRange(hMin, hMax));
+    const s = Math.floor(randomInRange(...satRange));
+    const l = Math.floor(randomInRange(...lightRange));
+
+    if (options.distinctHuesOnly && !isDistinctHue(h, usedHues)) continue;
+    if (options.excludePureColors && s > 80) continue;
+    if (options.excludeColors?.includes("brown") && isBrown(h, s, l)) continue;
+
+    const hex = hslToHex(h, s, l);
+    if (!results.has(hex)) {
+      usedHues.push(h);
+      results.add(hex);
+    }
+
+    // 보색 전략: 조건 만족 + 공간 남으면 보색도 넣음
+    if (
+      options.preferComplementary &&
+      results.size < count &&
+      Math.random() < 0.5
+    ) {
+      const compHue = (h + 180) % 360;
+      const compHex = hslToHex(compHue, s, l);
+      if (
+        (!options.distinctHuesOnly || isDistinctHue(compHue, usedHues)) &&
+        !results.has(compHex)
+      ) {
+        usedHues.push(compHue);
+        results.add(compHex);
+      }
+    }
+  }
+
+  // 실패 시 백업: 무작위 색으로 채움
+  while (results.size < count) {
+    results.add(
+      hslToHex(
+        Math.floor(Math.random() * 360),
+        Math.floor(randomInRange(30, 80)),
+        Math.floor(randomInRange(30, 80))
+      )
+    );
+  }
+
+  return Array.from(results).slice(0, count);
+}
+
+// ui 디자인용 색 조합 추천 함수
+function hexToHslUI(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h,
+    s,
+    l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function hslToHexUI(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let r, g, b;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+
+  return (
+    "#" +
+    [r, g, b]
+      .map((v) =>
+        Math.round((v + m) * 255)
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("")
+  );
+}
+
+function generateTonePalette(baseHex, count = 20) {
+  const [h, s, l] = hexToHslUI(baseHex);
+  const palette = [];
+
+  for (let i = 0; i < count; i++) {
+    const lightness = 95 - (90 / (count - 1)) * i;
+    palette.push(hslToHexUI(h, s, lightness));
+  }
+
+  return palette;
+}
+
+const keywords = {
+  nature: chrome.i18n.getMessage("nature"),
+  city: chrome.i18n.getMessage("city"),
+  food: chrome.i18n.getMessage("food"),
+  emotion: chrome.i18n.getMessage("emotion"),
+  spring: chrome.i18n.getMessage("spring"),
+  summer: chrome.i18n.getMessage("summer"),
+  autumn: chrome.i18n.getMessage("autumn"),
+  winter: chrome.i18n.getMessage("winter"),
+  vintage: chrome.i18n.getMessage("vintage"),
+  modern: chrome.i18n.getMessage("modern"),
+  warm: chrome.i18n.getMessage("warm"),
+  cool: chrome.i18n.getMessage("cool"),
+  bright: chrome.i18n.getMessage("bright"),
+  dark: chrome.i18n.getMessage("dark"),
+  calm: chrome.i18n.getMessage("calm"),
+  dynamic: chrome.i18n.getMessage("dynamic"),
+};
+
+document
+  .getElementById("generate-palette-btn")
+  .addEventListener("click", () => {
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const generationMethodSelect =
+        document.getElementById("generation-method");
+      const selected = generationMethodSelect.value;
+
+      if (selected === "preset") {
+        if (!data.colorPresets || selectedPresetIndex === null) {
+          return;
+        }
+
+        const preset = data.colorPresets[selectedPresetIndex];
+        const originalColors = preset.colors || [];
+
+        const recommendedColors =
+          generateSimilarColorsFromPreset(originalColors);
+
+        // 이후 UI에 표시하거나 새 프리셋으로 저장하도록 연결
+        renderGeneratedPalette(
+          "기존 프리셋 기반",
+          "기존 프리셋 기반으로 생성된 색상 조합",
+          recommendedColors
+        );
+      } else if (selected === "keyword") {
+        const colorCountInput = document.getElementById("color-count-input");
+
+        if (colorCountInput === "") {
+          alert("원하는 색상 개수를 입력해주세요.");
+        }
+
+        const keywordColors = getBaseColorFromKeyword(
+          selectedKeyword,
+          parseInt(colorCountInput.value)
+        );
+
+        renderGeneratedPalette(
+          "키워드 기반",
+          "키워드 기반으로 생성된 색상 조합",
+          keywordColors,
+          keywords[selectedKeyword]
+        );
+      } else if (selected === "ui") {
+        const selectedColor = window.selectedUiBaseColor;
+
+        const uiColors = generateTonePalette(selectedColor);
+
+        renderGeneratedPalette(
+          "UI 디자인 추천",
+          "UI 디자인 추천을 위한 색상 조합",
+          uiColors
+        );
+      }
+    });
+  });
+
+function renderGeneratedPalette(title, subtitle, colors, keyword) {
+  const container = document.getElementById("generated-palette-container");
+  container.style.display = "block"; // ✅ 이 시점에만 보이게 함
+  container.innerHTML = ""; // 초기화
+
+  const card = document.createElement("div");
+
+  card.innerHTML = `
+    <div class="palette-title">
+      <span>🎨</span>
+      <span>${title} ${keyword && keyword}</span>
+      <span style="font-size:10px; background:#334155; color:#60a5fa; padding: 2px 6px; border-radius: 6px;">Generated</span>
+    </div>
+    <div class="palette-subtitle">${subtitle}</div>
+    <div class="palette-colors">
+      ${colors
+        .map(
+          (hex) =>
+            `<div class="palette-color" style="background-color: ${hex};"></div>`
+        )
+        .join("")}
+    </div>
+    <div class="palette-footer">
+      <span style="font-size: 12px; color: #94a3b8;">${
+        colors.length
+      } colors</span>
+      <div class="buttons">
+        <button class="save-btn">💾 저장</button>
+        <button class="close-btn">✕</button>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(card);
+
+  // 닫기 버튼 이벤트
+  card.querySelector(".close-btn").addEventListener("click", () => {
+    container.innerHTML = "";
+  });
+
+  // 저장 버튼 이벤트 (선택적으로 구현)
+  card.querySelector(".save-btn").addEventListener("click", () => {
+    let invertedColorNames = {};
+    Object.entries(colors).forEach(([index, hex]) => {
+      invertedColorNames[hex] = hex;
+    });
+    let newPreset = {
+      id: Date.now(),
+      name: keyword ? `${keyword}` : title,
+      colors: colors,
+      colorNames: invertedColorNames,
+    };
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+      presets.push(newPreset);
+
+      chrome.storage.sync.set({ colorPresets: presets }, () => {
+        loadPresets();
+        alert("✅ 팔레트가 프리셋으로 저장되었습니다.");
+        container.innerHTML = "";
+      });
+    });
+  });
+}
+
+// 오늘의 랜덤 추천 색상 조합을 프리셋에 저장하는 함수
+function saveTodayPaletteAsPreset() {
+  chrome.storage.local.get("lastTodayColors", (localData) => {
+    const banner = document.getElementById("today-palette-banner");
+    const todayColors = localData.lastTodayColors;
+
+    if (!todayColors || todayColors.length === 0) {
+      alert("❌ 저장할 오늘의 색상 정보가 없습니다.");
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const presetName = `오늘의 추천 팔레트 (${timestamp})`;
+
+    const colorNames = {};
+    todayColors.forEach((hex) => {
+      colorNames[hex] = hex; // 이름 없이 색상 값 그대로 사용
+    });
+
+    const newPreset = {
+      id: timestamp,
+      name: presetName,
+      colors: todayColors,
+      colorNames: colorNames,
+    };
+
+    chrome.storage.sync.get("colorPresets", (data) => {
+      const presets = data.colorPresets || [];
+      presets.push(newPreset);
+
+      chrome.storage.sync.set({ colorPresets: presets }, () => {
+        alert("✅ 오늘의 색상이 프리셋으로 저장되었습니다.");
+        banner.classList.add("hidden");
+        loadPresets();
+      });
+    });
+  });
+}
+
+document
+  .getElementById("today-save-btn")
+  .addEventListener("click", saveTodayPaletteAsPreset);
+
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
 async function encryptColorsWithAES(preset) {
   let colorData = {}; // ✅ 색상 이름 + HEX 코드 저장용 객체
@@ -872,50 +1858,35 @@ async function encryptColorsWithAES(preset) {
   return data.encryptedCode;
 }
 
-function exportPresetInPopup() {
-  chrome.storage.sync.get(["colorPresets"], (data) => {
-    const presets = data.colorPresets || [];
+function exportPresetInPopup(preset) {
+  const selectedPreset = preset;
+  const colorNames = selectedPreset.colorNames || {};
 
-    if (presets.length === 0) {
-      alert(chrome.i18n.getMessage("no_saved_preset"));
-      return;
-    }
-
-    // ✅ 선택된 프리셋 인덱스가 유효한지 확인
-    if (selectedPresetIndex === null || selectedPresetIndex >= presets.length) {
-      alert(chrome.i18n.getMessage("no_selected_preset"));
-      return;
-    }
-
-    const selectedPreset = presets[selectedPresetIndex];
-    const colorNames = selectedPreset.colorNames || {};
-
-    // ✅ 선택한 프리셋의 colorNames만 export
-    const exportData = {};
-    Object.entries(colorNames).forEach(([name, hex]) => {
-      exportData[name] = hex;
-    });
-
-    const jsonString = JSON.stringify(exportData, null, 2); // 보기 좋게 포맷
-    const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    chrome.downloads.download(
-      {
-        url: url,
-        filename: `${selectedPreset.name || "colors"}.json`,
-        saveAs: true,
-      },
-      (downloadId) => {
-        if (chrome.runtime.lastError) {
-          console.error("❌ 다운로드 실패:", chrome.runtime.lastError.message);
-          alert(chrome.i18n.getMessage("fail_download"));
-        } else {
-          console.log("✅ 다운로드 시작됨! ID:", downloadId);
-        }
-      }
-    );
+  // ✅ 선택한 프리셋의 colorNames만 export
+  const exportData = {};
+  Object.entries(colorNames).forEach(([name, hex]) => {
+    exportData[name] = hex;
   });
+
+  const jsonString = JSON.stringify(exportData, null, 2); // 보기 좋게 포맷
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  chrome.downloads.download(
+    {
+      url: url,
+      filename: `${selectedPreset.name || "colors"}.json`,
+      saveAs: true,
+    },
+    (downloadId) => {
+      if (chrome.runtime.lastError) {
+        console.error("❌ 다운로드 실패:", chrome.runtime.lastError.message);
+        alert(chrome.i18n.getMessage("fail_download"));
+      } else {
+        console.log("✅ 다운로드 시작됨! ID:", downloadId);
+      }
+    }
+  );
 }
 
 // ✅ 암호화 후 input 필드에 표시하고 클립보드에 복사하는 함수
@@ -957,39 +1928,19 @@ async function encryptAndCopyToClipboard(
 document.getElementById("sendToCode").addEventListener("click", () => {
   if (selectedPresetIndex === null) return;
 
-  chrome.storage.sync.get(["isSubscribed"], (data) => {
-    let isSubscribed = data.isSubscribed || false;
+  chrome.storage.sync.get(["colorPresets"], async (data) => {
+    let preset = data.colorPresets[selectedPresetIndex];
+    let encryptedCode = await encryptColorsWithAES(preset);
 
-    if (!isSubscribed) {
-      subscriptionBanner.classList.remove("hidden"); // ✅ 구독이 필요하면 배너 표시
-      setTimeout(() => {
-        subscriptionBanner.classList.add("show");
-        subscriptionBanner.classListadd("shifted");
-      }, 500);
-
-      setTimeout(() => {
-        subscriptionBanner.classList.remove("show");
-        subscriptionBanner.classList.remove("shifted");
-        setTimeout(() => {
-          subscriptionBanner.classList.add("hidden");
-        }, 500);
-      }, 5000);
-    } else {
-      chrome.storage.sync.get(["colorPresets"], async (data) => {
-        let preset = data.colorPresets[selectedPresetIndex];
-        let encryptedCode = await encryptColorsWithAES(preset);
-
-        // ✅ 클립보드에 복사
-        navigator.clipboard
-          .writeText(encryptedCode)
-          .then(() => {
-            alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
-          })
-          .catch((err) => {
-            console.error("❌ 클립보드 복사 실패:", err);
-          });
+    // ✅ 클립보드에 복사
+    navigator.clipboard
+      .writeText(encryptedCode)
+      .then(() => {
+        alert(chrome.i18n.getMessage("copy_encrypted_code_alert"));
+      })
+      .catch((err) => {
+        console.error("❌ 클립보드 복사 실패:", err);
       });
-    }
   });
 });
 
@@ -1066,22 +2017,22 @@ document.getElementById("decodeAndSave").addEventListener("click", async () => {
 });
 
 // ✅ 구독 버튼 클릭 시 이벤트 처리
-document.getElementById("subscribeNow").addEventListener("click", () => {
-  // ✅ 구글 이메일 정보 가져오기
-  chrome.storage.sync.get(["userEmail"], async (data) => {
-    const email = data.userEmail;
+// document.getElementById("subscribeNow").addEventListener("click", () => {
+//   // ✅ 구글 이메일 정보 가져오기
+//   chrome.storage.sync.get(["userEmail"], async (data) => {
+//     const email = data.userEmail;
 
-    if (!email) {
-      alert(chrome.i18n.getMessage("no_google_email"));
-      return;
-    }
+//     if (!email) {
+//       alert(chrome.i18n.getMessage("no_google_email"));
+//       return;
+//     }
 
-    const encryptedEmail = await encryptEmail(email);
-    const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
-      encryptedEmail
-    )}`;
+//     const encryptedEmail = await encryptEmail(email);
+//     const subscribeUrl = `https://paletteboxsubscribe.com?e=${encodeURIComponent(
+//       encryptedEmail
+//     )}`;
 
-    // ✅ 새 탭으로 구독 페이지 열기
-    window.open(subscribeUrl, "_blank");
-  });
-});
+//     // ✅ 새 탭으로 구독 페이지 열기
+//     window.open(subscribeUrl, "_blank");
+//   });
+// });
