@@ -31,17 +31,36 @@ function checkSubscriptionStatus(email, callback) {
   fetch(`https://palettebox.net/subscription-status/${email}`)
     .then((res) => res.json())
     .then((data) => {
-      let isSubscribed = data.status === "ACTIVE" ? true : false;
-      chrome.storage.sync.set(
-        {
-          isSubscribed: isSubscribed,
-          subscriptionId: data.subscription_id,
-          userEmail: email,
-        },
-        () => {
-          callback(isSubscribed);
-        }
-      );
+      let isSubscribed =
+        data.status === "LIFETIME"
+          ? true
+          : data.status === "ACTIVE"
+          ? true
+          : false;
+
+      if (data.status === "LIFETIME") {
+        chrome.storage.sync.set(
+          {
+            isSubscribed: isSubscribed,
+            subscriptionId: data.purchase_id,
+            userEmail: email,
+          },
+          () => {
+            callback(isSubscribed);
+          }
+        );
+      } else {
+        chrome.storage.sync.set(
+          {
+            isSubscribed: isSubscribed,
+            subscriptionId: data.subscription_id,
+            userEmail: email,
+          },
+          () => {
+            callback(isSubscribed);
+          }
+        );
+      }
     })
     .catch((error) => {
       callback(false);
