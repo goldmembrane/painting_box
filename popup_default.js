@@ -162,7 +162,7 @@ function showTodayPalette() {
   const randomSeed = new Date().toISOString(); // 매번 달라짐
 
   chrome.storage.local.get(
-    ["suppressTodayBanner", "lastTodayColors"],
+    ["suppressTodayBanner", "lastTodayColors", "todayColorCount"],
     (data) => {
       if (data.suppressTodayBanner === todayKey) return;
 
@@ -170,7 +170,12 @@ function showTodayPalette() {
       const container = document.getElementById("today-colors");
 
       const previousColors = data.lastTodayColors || [];
-      const palette = generateDistinctPalette(randomSeed, 5, previousColors);
+      const count = data.todayColorCount || 5; // 기본 5개
+      const palette = generateDistinctPalette(
+        randomSeed,
+        count,
+        previousColors
+      );
 
       // 저장
       chrome.storage.local.set({ lastTodayColors: palette });
@@ -371,6 +376,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       presetOptionContainer.classList.add("hidden");
     }
+  });
+
+  // ✅ settings 화면이 열릴 때 저장된 값 불러오기
+  chrome.storage.local.get(["todayColorCount"], (data) => {
+    const count = data.todayColorCount || 5;
+    document.getElementById("todayColorCount").value = count;
   });
 
   function loadPresetOptions() {
@@ -1835,6 +1846,14 @@ function saveTodayPaletteAsPreset() {
 document
   .getElementById("today-save-btn")
   .addEventListener("click", saveTodayPaletteAsPreset);
+
+// 오늘의 색상 조합에 들어가는 색상 수 저장
+document.getElementById("saveTodayColorCount").addEventListener("click", () => {
+  const count = parseInt(document.getElementById("todayColorCount").value, 10);
+  chrome.storage.local.set({ todayColorCount: count }, () => {
+    alert("오늘의 색상 수가 조정되었습니다.");
+  });
+});
 
 // ✅ HEX 색상 및 색상 이름 리스트를 AES-256으로 암호화하는 함수
 async function encryptColorsWithAES(preset) {
