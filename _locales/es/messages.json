@@ -122,6 +122,7 @@
     "message": "Seleccionar un ajuste prisset de referencia"
   },
   "select_preset_in_option": { "message": "Seleccione un ajuste prisset." },
+  "original_preset": { "message": "prisset" },
   "select_keyword": { "message": "Seleccione una palabra clave." },
   "color_count": { "message": "numero de colores" },
   "create_color_palette": { "message": "Creación de paleta" },
@@ -129,5 +130,22 @@
     "message": "🎯 Combinaciones de colores aleatorias recomendadas"
   },
   "save_daily_color": { "message": "Guardar en prisset" },
-  "dismiss_today": { "message": "No me veas por un día" }
+  "dismiss_today": { "message": "No me veas por un día" },
+  "existing_preset_description": {
+    "message": "Combinaciones de colores generadas según ajustes preestablecidos existentes"
+  },
+  "enter_color_count_input": {
+    "message": "Introduzca el número de colores que desee."
+  },
+  "origin_keyword": { "message": "Basado en palabras clave" },
+  "origin_keyword_description": {
+    "message": "Combinaciones de colores generadas en función de palabras clave"
+  },
+  "recommended_ui_design": {
+    "message": "Recomendaciones de diseño de interfaz de usuario"
+  },
+  "recommended_ui_design_description": {
+    "message": "Combinaciones de colores para recomendaciones de diseño de UI"
+  },
+  "save_button": { "message": "ahorrar" }
 }

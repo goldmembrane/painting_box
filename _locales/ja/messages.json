@@ -114,10 +114,24 @@
   "ui_mixture": { "message": "UIデザイン" },
   "select_reference_preset": { "message": "基準プリセットの選択" },
   "select_preset_in_option": { "message": "プリセットを選択してください。" },
+  "original_preset": { "message": "プリセット" },
   "select_keyword": { "message": "キーワードを選択してください。" },
   "color_count": { "message": "色の数" },
   "create_color_palette": { "message": "パレットの作成" },
   "daily_color_mixture": { "message": "🎯 おすすめランダムカラーの組み合わせ" },
   "save_daily_color": { "message": "プリセットに保存" },
-  "dismiss_today": { "message": "今日は一日見ない" }
+  "dismiss_today": { "message": "今日は一日見ない" },
+  "existing_preset_description": {
+    "message": "既存のプリセットに基づいて生成された色の組み合わせ"
+  },
+  "enter_color_count_input": { "message": "希望の色数を入力してください。" },
+  "origin_keyword": { "message": "キーワードベース" },
+  "origin_keyword_description": {
+    "message": "キーワードに基づいて生成された色の組み合わせ"
+  },
+  "recommended_ui_design": { "message": "UIデザインのおすすめ" },
+  "recommended_ui_design_description": {
+    "message": "UIデザイン推奨のための色の組み合わせ"
+  },
+  "save_button": { "message": "保存" }
 }

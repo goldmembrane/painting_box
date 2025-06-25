@@ -108,10 +108,24 @@
   "ui_mixture": { "message": "UI 디자인" },
   "select_reference_preset": { "message": "기준 프리셋 선택" },
   "select_preset_in_option": { "message": "프리셋을 선택하세요." },
+  "original_preset": { "message": "프리셋" },
   "select_keyword": { "message": "키워드를 선택하세요." },
   "color_count": { "message": "색상 개수" },
   "create_color_palette": { "message": "팔레트 생성" },
   "daily_color_mixture": { "message": "🎯 추천 랜덤 색상 조합" },
   "save_daily_color": { "message": "프리셋에 저장" },
-  "dismiss_today": { "message": "오늘 하루동안 보지 않기" }
+  "dismiss_today": { "message": "오늘 하루동안 보지 않기" },
+  "existing_preset_description": {
+    "message": "기존 프리셋 기반으로 생성된 색상 조합"
+  },
+  "enter_color_count_input": { "message": "원하는 색상 개수를 입력하세요." },
+  "origin_keyword": { "message": "키워드 기반" },
+  "origin_keyword_description": {
+    "message": "키워드 기반으로 생성된 색상 조합"
+  },
+  "recommended_ui_design": { "message": "UI 디자인 추천" },
+  "recommended_ui_design_description": {
+    "message": "UI 디자인 추천을 위한 색상 조합"
+  },
+  "save_button": { "message": "저장" }
 }

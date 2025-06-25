@@ -114,6 +114,7 @@
   "ui_mixture": { "message": "UI design" },
   "select_reference_preset": { "message": "select a reference preset" },
   "select_preset_in_option": { "message": "select a preset." },
+  "original_preset": { "message": "preset" },
   "select_keyword": { "message": "select keyword" },
   "color_count": { "message": "number of colors" },
   "create_color_palette": { "message": "create palette" },
@@ -121,5 +122,20 @@
     "message": "🎯 Recommended random color combinations"
   },
   "save_daily_color": { "message": "save to preset" },
-  "dismiss_today": { "message": "Don't see me for a day" }
+  "dismiss_today": { "message": "Don't see me for a day" },
+  "existing_preset_description": {
+    "message": "Color combinations generated based on existing presets"
+  },
+  "enter_color_count_input": {
+    "message": "Enter the number of colors you want."
+  },
+  "origin_keyword": { "message": "Keyword based" },
+  "origin_keyword_description": {
+    "message": "Color combinations generated based on keywords"
+  },
+  "recommended_ui_design": { "message": "UI design recommendations" },
+  "recommended_ui_design_description": {
+    "message": "Color combinations for UI design recommendations"
+  },
+  "save_button": { "message": "save" }
 }
