@@ -147,5 +147,6 @@
   "recommended_ui_design_description": {
     "message": "Combinaciones de colores para recomendaciones de diseño de UI"
   },
-  "save_button": { "message": "ahorrar" }
+  "save_button": { "message": "ahorrar" },
+  "random_color_count": { "message": "Recuento de colores aleatorios" }
 }

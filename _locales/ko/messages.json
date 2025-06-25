@@ -127,5 +127,6 @@
   "recommended_ui_design_description": {
     "message": "UI 디자인 추천을 위한 색상 조합"
   },
-  "save_button": { "message": "저장" }
+  "save_button": { "message": "저장" },
+  "random_color_count": { "message": "랜덤 색상 개수" }
 }

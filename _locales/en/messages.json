@@ -137,5 +137,6 @@
   "recommended_ui_design_description": {
     "message": "Color combinations for UI design recommendations"
   },
-  "save_button": { "message": "save" }
+  "save_button": { "message": "save" },
+  "random_color_count": { "message": "Random Color Count" }
 }

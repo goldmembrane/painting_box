@@ -133,5 +133,6 @@
   "recommended_ui_design_description": {
     "message": "UIデザイン推奨のための色の組み合わせ"
   },
-  "save_button": { "message": "保存" }
+  "save_button": { "message": "保存" },
+  "random_color_count": { "message": "ランダムカラー数" }
 }

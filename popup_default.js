@@ -334,6 +334,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  document.getElementById("todayColorCountLabel").textContent =
+    chrome.i18n.getMessage("random_color_count");
+
+  document.getElementById("saveTodayColorCount").textContent =
+    chrome.i18n.getMessage("save_button");
+
   function updateSubscriptionUI() {
     chrome.storage.sync.get(["isSubscribed"], (data) => {
       const unsubscribeBtn = document.getElementById("unsubscribeBtn");
